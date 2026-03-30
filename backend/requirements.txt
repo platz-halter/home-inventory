@@ -1,0 +1,9 @@
+```
+fastapi==0.115.0
+uvicorn[standard]==0.30.0    # the server that runs FastAPI
+sqlalchemy==2.0.35           # ORM - Python classes → SQL
+alembic==1.13.3              # DB migrations
+psycopg2-binary==2.9.9       # PostgreSQL driver for Python
+pydantic-settings==2.5.2     # reads .env into Python settings object
+python-dotenv==1.0.1         # loads .env file
+
