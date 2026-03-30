@@ -3,10 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(), // replaces the postcss approach
-  ],
+  plugins: [react(), tailwindcss()],
   server: {
     host: true,
     port: 3000,
