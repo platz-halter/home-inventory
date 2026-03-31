@@ -1,14 +1,13 @@
-from operator import index
-from sqlalchemy import Integer, String, Text, Float, ForeignKey, Table, Column, false
-from sqlalchemy.orm import Mapped, MappedColumn, mapped_column, relationship
+from typing import Optional
+from sqlalchemy import Integer, String, Text, Float, ForeignKey, Table, Column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.database import Base
 
-# Association tables
 item_tags = Table(
     "item_tags",
     Base.metadata,
     Column("item_id", Integer, ForeignKey("items.id"), primary_key=True),
-    Column("tag_id", Integer, ForeignKey("categories.id"), primary_key=True),
+    Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
 
 item_categories = Table(
@@ -24,25 +23,20 @@ class Item(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
 
-    room_id: Mapped[int | None] = mapped_column(
+    # Optional[int] instead of int | None — SQLAlchemy handles this reliably
+    room_id: Mapped[Optional[int]] = mapped_column(
         Integer, ForeignKey("rooms.id"), nullable=True
     )
 
-    shelf: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    level_or_drawer: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    shelf: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    level_or_drawer: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    comments: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    fill_level: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
 
-    comments: Mapped[str | None] = mapped_column(Text, nullable=True)
-
-    # 0.0 empty 1.0 Full
-    fill_level: Mapped[float | None] = mapped_column(Float)
-
-    # Relationships
-    room: Mapped[float | None] = relationship("Room", back_populates="items")
+    room: Mapped[Optional["Room"]] = relationship("Room", back_populates="items")
 
     names: Mapped[list["ItemName"]] = relationship(
-        "ItemName",
-        back_populates="item",
-        cascade="all, delete-orphan",  # Deleting items also removes the linked names from the Names table
+        "ItemName", back_populates="item", cascade="all, delete-orphan"
     )
 
     tags: Mapped[list["Tag"]] = relationship(
@@ -61,8 +55,7 @@ class ItemName(Base):
     item_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("items.id"), nullable=False, index=True
     )
-
     name: Mapped[str] = mapped_column(String(200), nullable=False)
-    is_primary: Mapped[bool] = mapped_column(default=false)
+    is_primary: Mapped[bool] = mapped_column(default=False)
 
     item: Mapped["Item"] = relationship("Item", back_populates="names")
