@@ -1,7 +1,5 @@
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import or_
 
-from app.models import category
 from app.models.item import Item, ItemName
 from app.models.tag import Tag
 from app.models.category import Category
@@ -142,6 +140,15 @@ def clone_item(db: Session, item_id: int) -> Item | None:
     )
 
     return create_item(db, cloned)
+
+
+def delete_item(db: Session, item_id: int) -> Item | None:
+    db_item = get_item(db, item_id)
+
+    if db_item:
+        db.delete(db_item)
+        db.commit()
+    return db_item
 
 
 def bulk_delete_items(db: Session, item_ids: list[int]) -> int:

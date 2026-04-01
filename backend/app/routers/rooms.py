@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import delete, exists
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas.room import Room, RoomCreate
