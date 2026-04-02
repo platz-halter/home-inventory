@@ -2,63 +2,90 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { itemsApi } from '../api/items'
 
+// Helper — read array of ints from URL param: "1,2,3" → [1,2,3]
+const getIds = (params, key) => {
+  const val = params.get(key)
+  if (!val) return []
+  return val.split(',').map(Number).filter(Boolean)
+}
+
+// Helper — write array to URL param: [1,2,3] → "1,2,3"
+const setIds = (params, key, ids) => {
+  if (!ids || ids.length === 0) {
+    params.delete(key)
+  } else {
+    params.set(key, ids.join(','))
+  }
+}
+
 export function useItems() {
   const [items, setItems] = useState([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-
-  // Filters live in the URL — this makes them persistent and shareable
   const [searchParams, setSearchParams] = useSearchParams()
 
   const search = searchParams.get('search') || ''
-  const categoryId = searchParams.get('category_id') || null
-  const tagId = searchParams.get('tag_id') || null
-  const roomId = searchParams.get('room_id') || null
+  const categoryIds = getIds(searchParams, 'category_ids')
+  const tagIds = getIds(searchParams, 'tag_ids')
+  const roomIds = getIds(searchParams, 'room_ids')
   const skip = parseInt(searchParams.get('skip') || '0')
-  // Fewer items per page on mobile — detected by window width
   const limit = parseInt(
     searchParams.get('limit') ||
     (window.innerWidth < 768 ? '10' : '50')
   )
 
-  // fetchItems is wrapped in useCallback so it doesn't change on every render
   const fetchItems = useCallback(() => {
     setLoading(true)
     const params = { skip, limit }
     if (search) params.search = search
-    if (categoryId) params.category_id = categoryId
-    if (tagId) params.tag_id = tagId
-    if (roomId) params.room_id = roomId
 
+    // Backend currently supports single IDs — we filter client-side
+    // for multi-select until we extend the backend in a future update
     itemsApi.getAll(params)
       .then(data => {
-        setItems(data.items)
+        let filtered = data.items
+
+        if (categoryIds.length > 0) {
+          filtered = filtered.filter(item =>
+            item.categories.some(c => categoryIds.includes(c.id))
+          )
+        }
+        if (tagIds.length > 0) {
+          filtered = filtered.filter(item =>
+            item.tags.some(t => tagIds.includes(t.id))
+          )
+        }
+        if (roomIds.length > 0) {
+          filtered = filtered.filter(item =>
+            roomIds.includes(item.room_id)
+          )
+        }
+
+        setItems(filtered)
         setTotal(data.total)
       })
       .catch(e => setError(e.message))
       .finally(() => setLoading(false))
-  }, [search, categoryId, tagId, roomId, skip, limit])
+  }, [search, categoryIds.join(','), tagIds.join(','), roomIds.join(','), skip, limit])
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
-  // Filter setters — update URL params, triggers refetch automatically
   const setFilter = (key, value) => {
     setSearchParams(prev => {
       const next = new URLSearchParams(prev)
-      if (value) {
-        next.set(key, value)
-      } else {
-        next.delete(key)
-      }
-      next.delete('skip') // reset pagination on filter change
+      if (key === 'categoryIds') setIds(next, 'category_ids', value)
+      else if (key === 'tagIds') setIds(next, 'tag_ids', value)
+      else if (key === 'roomIds') setIds(next, 'room_ids', value)
+      else if (value) next.set(key, value)
+      else next.delete(key)
+      next.delete('skip')
       return next
     })
   }
 
   const clearFilters = () => setSearchParams({})
 
-  // Item actions
   const createItem = async (data) => {
     const item = await itemsApi.create(data)
     fetchItems()
@@ -88,15 +115,10 @@ export function useItems() {
   }
 
   return {
-    // Data
     items, total, loading, error,
-    // Active filters
-    search, categoryId, tagId, roomId, skip, limit,
-    // Filter actions
+    search, categoryIds, tagIds, roomIds, skip, limit,
     setFilter, clearFilters,
-    // Item actions
     createItem, updateItem, deleteItem, cloneItem, bulkDelete,
-    // Manual refresh
     refresh: fetchItems,
   }
 }

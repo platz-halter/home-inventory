@@ -1,24 +1,29 @@
 import { useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 
-export function useKeyboardShortcuts() {
+export function useKeyboardShortcuts(onNewItem = null) {
   const navigate = useNavigate()
+  const location = useLocation()
 
   useEffect(() => {
     const handler = (e) => {
-      // Don't fire shortcuts when typing in an input
       const tag = document.activeElement?.tagName
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) return
+      if (e.metaKey || e.ctrlKey || e.altKey) return
 
       switch (e.key) {
         case 'n':
         case 'N':
-          // N — open new item form
-          navigate('/items?new=true')
-          break
-        case '?':
-          // ? — show shortcuts modal (we'll add this later)
-          console.log('shortcuts modal')
+          e.preventDefault()
+          if (onNewItem) {
+            // If caller provided a direct handler, use it
+            onNewItem()
+          } else if (location.pathname === '/items') {
+            // Already on items page — dispatch a custom event
+            window.dispatchEvent(new CustomEvent('open-new-item-form'))
+          } else {
+            navigate('/items?new=true')
+          }
           break
         default:
           break
@@ -27,5 +32,5 @@ export function useKeyboardShortcuts() {
 
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [navigate])
+  }, [navigate, location, onNewItem])
 }

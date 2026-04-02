@@ -91,15 +91,13 @@ export function ItemTable({
         <thead>
           <tr style={{ borderBottom: '1px solid var(--border)' }}>
             {/* Select all */}
-            <th className="py-2 px-3 w-8">
+            <th className="py-3 px-4 w-10 text-center">
               <input
                 type="checkbox"
                 checked={allSelected}
-                onChange={() => onSelectAll(allSelected
-                  ? []
-                  : items.map(i => i.id)
-                )}
+                onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))}
                 className="cursor-pointer"
+                style={{ accentColor: 'var(--accent)', width: '15px', height: '15px' }}
               />
             </th>
             <Th sortKey="name" currentSort={sort} onSort={handleSort}>
@@ -146,17 +144,18 @@ export function ItemTable({
                 className="transition-colors hover:bg-[var(--bg-secondary)]"
               >
                 {/* Checkbox */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4 text-center">
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => onSelect(item.id)}
                     className="cursor-pointer"
+                    style={{ accentColor: 'var(--accent)', width: '15px', height: '15px' }}
                   />
                 </td>
 
                 {/* Name */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4">
                   <p style={{ color: 'var(--text-primary)' }}>
                     {primaryName}
                   </p>
@@ -171,7 +170,7 @@ export function ItemTable({
                 </td>
 
                 {/* Location */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4">
                   <p style={{ color: 'var(--text-secondary)' }}>
                     {item.room?.name || '—'}
                   </p>
@@ -188,7 +187,7 @@ export function ItemTable({
                 </td>
 
                 {/* Tags / Categories */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4">
                   <div className="flex flex-wrap gap-1">
                     {item.categories.map(c => (
                       <Badge key={c.id} variant="active">{c.name}</Badge>
@@ -200,12 +199,12 @@ export function ItemTable({
                 </td>
 
                 {/* Fill level */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4">
                   <FillBar level={item.fill_level} />
                 </td>
 
                 {/* Image placeholder */}
-                <td className="py-2 px-3">
+                <td className="py-3 px-4">
                   <button
                     className="font-mono text-lg leading-none transition-colors"
                     style={{ color: 'var(--text-muted)' }}
@@ -217,28 +216,21 @@ export function ItemTable({
                 </td>
 
                 {/* Row actions */}
-                <td className="py-2 px-3">
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onEdit(item)}
-                    >
+                <td className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onClone(item.id)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => onClone(item.id)}>
                       Clone
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
                       onClick={() => onDelete(item.id)}
+                      style={{ minWidth: '64px' }}
                     >
-                      ×
+                      Delete
                     </Button>
                   </div>
                 </td>

@@ -1,75 +1,98 @@
-export function FilterPanel({ rooms, tags, categories, onFilter, current }) {
+function FilterSection({ title, items, selectedIds, onToggle }) {
+  if (items.length === 0) return null
+
   return (
-    <div
-      className="card p-4 flex flex-col gap-4"
-      style={{ minWidth: '200px' }}
-    >
+    <div className="flex flex-col gap-2">
       <p
         className="font-mono text-xs tracking-widest uppercase"
         style={{ color: 'var(--text-muted)' }}
       >
-        Filter
+        {title}
       </p>
-
-      {/* Room filter */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          className="text-xs font-mono"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Room
-        </label>
-        <select
-          value={current.roomId || ''}
-          onChange={e => onFilter('room_id', e.target.value || null)}
-          className="text-sm py-1.5 px-2 border rounded-[var(--radius-sm)] bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] focus:outline-none"
-        >
-          <option value="">All rooms</option>
-          {rooms.map(r => (
-            <option key={r.id} value={r.id}>{r.name}</option>
-          ))}
-        </select>
+      <div
+        className="flex flex-col rounded-[var(--radius-sm)] overflow-hidden"
+        style={{ border: '1px solid var(--border)' }}
+      >
+        {items.map((item, i) => {
+          const checked = selectedIds.includes(item.id)
+          return (
+            <label
+              key={item.id}
+              className="flex items-center gap-3 px-3 py-2.5 cursor-pointer
+                         transition-colors text-sm"
+              style={{
+                borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                background: checked ? 'var(--bg-tertiary)' : 'transparent',
+                color: checked ? 'var(--text-primary)' : 'var(--text-secondary)',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={checked}
+                onChange={() => onToggle(item.id)}
+                className="flex-shrink-0"
+                style={{ accentColor: 'var(--accent)' }}
+              />
+              <span>{item.name}</span>
+              {checked && (
+                <span
+                  className="ml-auto font-mono text-xs"
+                  style={{ color: 'var(--text-muted)' }}
+                >
+                  ✓
+                </span>
+              )}
+            </label>
+          )
+        })}
       </div>
+    </div>
+  )
+}
 
-      {/* Category filter */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          className="text-xs font-mono"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Category
-        </label>
-        <select
-          value={current.categoryId || ''}
-          onChange={e => onFilter('category_id', e.target.value || null)}
-          className="text-sm py-1.5 px-2 border rounded-[var(--radius-sm)] bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] focus:outline-none"
-        >
-          <option value="">All categories</option>
-          {categories.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </div>
+export function FilterPanel({ rooms, tags, categories, onFilter, current }) {
+  const toggle = (key, id) => {
+    const currentIds = current[key] || []
+    const next = currentIds.includes(id)
+      ? currentIds.filter(x => x !== id)
+      : [...currentIds, id]
+    onFilter(key, next.length > 0 ? next : null)
+  }
 
-      {/* Tag filter */}
-      <div className="flex flex-col gap-1.5">
-        <label
-          className="text-xs font-mono"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Tag
-        </label>
-        <select
-          value={current.tagId || ''}
-          onChange={e => onFilter('tag_id', e.target.value || null)}
-          className="text-sm py-1.5 px-2 border rounded-[var(--radius-sm)] bg-[var(--bg-secondary)] text-[var(--text-primary)] border-[var(--border)] focus:outline-none"
-        >
-          <option value="">All tags</option>
-          {tags.map(t => (
-            <option key={t.id} value={t.id}>{t.name}</option>
-          ))}
-        </select>
-      </div>
+  const hasAny = rooms.length > 0 || tags.length > 0 || categories.length > 0
+
+  return (
+    <div
+      className="rounded-[var(--radius-md)] p-4 flex flex-col gap-5"
+      style={{
+        border: '1px solid var(--border)',
+        background: 'var(--bg-secondary)',
+      }}
+    >
+      {!hasAny && (
+        <p className="text-xs font-mono" style={{ color: 'var(--text-muted)' }}>
+          No rooms, tags or categories yet — add them in Manage.
+        </p>
+      )}
+
+      <FilterSection
+        title="Room"
+        items={rooms}
+        selectedIds={current.roomIds || []}
+        onToggle={(id) => toggle('roomIds', id)}
+      />
+      <FilterSection
+        title="Category"
+        items={categories}
+        selectedIds={current.categoryIds || []}
+        onToggle={(id) => toggle('categoryIds', id)}
+      />
+      <FilterSection
+        title="Tag"
+        items={tags}
+        selectedIds={current.tagIds || []}
+        onToggle={(id) => toggle('tagIds', id)}
+      />
     </div>
   )
 }

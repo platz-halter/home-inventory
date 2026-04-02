@@ -35,26 +35,35 @@ function QuickAction({ icon, label, description, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="card p-4 text-left flex items-start gap-3
-                 transition-colors hover:bg-[var(--bg-tertiary)] w-full"
+      className="text-left flex items-start gap-4 p-5
+                 rounded-[var(--radius-md)] w-full transition-colors"
+      style={{
+        border: '1px solid var(--border)',
+        background: 'var(--bg-secondary)',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+      onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
     >
-      <span
-        className="font-mono text-xl mt-0.5"
-        style={{ color: 'var(--text-muted)' }}
+      {/* Fixed-size icon box — always centered */}
+      <div
+        className="flex items-center justify-center flex-shrink-0
+                   rounded-[var(--radius-sm)] font-mono text-base"
+        style={{
+          width: '36px',
+          height: '36px',
+          background: 'var(--bg-tertiary)',
+          border: '1px solid var(--border)',
+          color: 'var(--text-secondary)',
+          lineHeight: 1,
+        }}
       >
         {icon}
-      </span>
-      <div>
-        <p
-          className="text-sm font-medium"
-          style={{ color: 'var(--text-primary)' }}
-        >
+      </div>
+      <div className="flex flex-col gap-0.5 pt-0.5">
+        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
           {label}
         </p>
-        <p
-          className="text-xs mt-0.5"
-          style={{ color: 'var(--text-muted)' }}
-        >
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
           {description}
         </p>
       </div>

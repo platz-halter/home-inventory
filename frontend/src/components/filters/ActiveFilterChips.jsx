@@ -1,28 +1,31 @@
 import { Badge } from '../ui/Badge'
 
 export function ActiveFilterChips({
-  search, categoryId, tagId, roomId,
+  search, categoryIds, tagIds, roomIds,
   categories, tags, rooms,
-  onRemove, onClearAll
+  onRemove, onClearAll,
 }) {
   const chips = []
 
-  if (search) chips.push({
-    key: 'search',
-    label: `"${search}"`,
+  if (search) chips.push({ key: 'search', label: `"${search}"` })
+
+  categoryIds.forEach(id => {
+    const cat = categories.find(c => c.id === id)
+    if (cat) chips.push({ key: `category_${id}`, label: `Category: ${cat.name}`,
+      remove: () => onRemove('categoryIds', id) })
   })
-  if (categoryId) {
-    const cat = categories.find(c => c.id === parseInt(categoryId))
-    chips.push({ key: 'category_id', label: `Category: ${cat?.name || categoryId}` })
-  }
-  if (tagId) {
-    const tag = tags.find(t => t.id === parseInt(tagId))
-    chips.push({ key: 'tag_id', label: `Tag: ${tag?.name || tagId}` })
-  }
-  if (roomId) {
-    const room = rooms.find(r => r.id === parseInt(roomId))
-    chips.push({ key: 'room_id', label: `Room: ${room?.name || roomId}` })
-  }
+
+  tagIds.forEach(id => {
+    const tag = tags.find(t => t.id === id)
+    if (tag) chips.push({ key: `tag_${id}`, label: `Tag: ${tag.name}`,
+      remove: () => onRemove('tagIds', id) })
+  })
+
+  roomIds.forEach(id => {
+    const room = rooms.find(r => r.id === id)
+    if (room) chips.push({ key: `room_${id}`, label: `Room: ${room.name}`,
+      remove: () => onRemove('roomIds', id) })
+  })
 
   if (chips.length === 0) return null
 
@@ -38,7 +41,7 @@ export function ActiveFilterChips({
         <Badge
           key={chip.key}
           variant="active"
-          onRemove={() => onRemove(chip.key)}
+          onRemove={chip.remove || (() => onRemove('search', null))}
         >
           {chip.label}
         </Badge>

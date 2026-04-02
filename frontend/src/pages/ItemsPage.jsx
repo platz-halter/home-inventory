@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useItems } from '../hooks/useItems'
 import { useRooms } from '../hooks/useRooms'
@@ -18,37 +18,45 @@ import { useIsMobile } from '../hooks/useIsMobile'
 export function ItemsPage() {
   const {
     items, total, loading, error,
-    search, categoryId, tagId, roomId, skip, limit,
+    search, categoryIds, tagIds, roomIds, skip, limit,
     setFilter, clearFilters,
     createItem, updateItem, deleteItem, cloneItem, bulkDelete,
   } = useItems()
 
   const { rooms } = useRooms()
-  const { tags } = useTags()
+  const { tags, createTag } = useTags()
   const { categories } = useCategories()
-
   const isMobile = useIsMobile()
 
-  // Modal state
   const [showForm, setShowForm] = useState(false)
   const [editItem, setEditItem] = useState(null)
   const [showFilter, setShowFilter] = useState(false)
-
-  // Multi-select state
   const [selectedIds, setSelectedIds] = useState([])
+  const [localTags, setLocalTags] = useState([])
+
+  // Keep localTags synced with fetched tags
+  useEffect(() => { setLocalTags(tags) }, [tags])
 
   const [searchParams] = useSearchParams()
 
-  // Open form if ?new=true in URL (from keyboard shortcut)
-  useState(() => {
-    if (searchParams.get('new') === 'true') setShowForm(true)
-  })
+  // Handle ?new=true from keyboard shortcut — works on any page
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setShowForm(true)
+    }
+  }, [searchParams])
 
-  const handleSelect = (id) => {
+  useEffect(() => {
+  const handler = () => setShowForm(true)
+  window.addEventListener('open-new-item-form', handler)
+  return () => window.removeEventListener('open-new-item-form', handler)
+}, [])
+
+
+  const handleSelect = (id) =>
     setSelectedIds(prev =>
       prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
     )
-  }
 
   const handleEdit = (item) => {
     setEditItem(item)
@@ -81,29 +89,30 @@ export function ItemsPage() {
     setSelectedIds([])
   }
 
-  const activeFilterCount = [search, categoryId, tagId, roomId]
-    .filter(Boolean).length
+  const handleTagCreated = (newTag) => {
+    setLocalTags(prev => [...prev, newTag])
+  }
+
+  const activeFilterCount = [
+    search, ...categoryIds, ...tagIds, ...roomIds
+  ].filter(Boolean).length
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Page header */}
+    <div className="flex flex-col gap-5">
+
+      {/* ── Page header ───────────────────────────── */}
       <div className="flex items-center justify-between">
         <h1
           className="font-mono text-xs tracking-widest uppercase"
           style={{ color: 'var(--text-muted)' }}
         >
           Inventory
-          <span className="ml-2" style={{ color: 'var(--text-muted)' }}>
-            ({total})
-          </span>
+          <span className="ml-2">({total})</span>
         </h1>
-        <Button onClick={() => setShowForm(true)} size="sm">
-          + New item
-        </Button>
       </div>
 
-      {/* Search + filter bar */}
-      <div className="flex gap-2">
+      {/* ── Search + filter + add in one row ──────── */}
+      <div className="flex items-center gap-2">
         <SearchBar
           value={search}
           onChange={val => setFilter('search', val)}
@@ -112,59 +121,81 @@ export function ItemsPage() {
           variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
           size="sm"
           onClick={() => setShowFilter(f => !f)}
+          style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
         >
           Filter {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
         </Button>
+        {/* Add button on same row as search */}
+        <Button
+          size="sm"
+          onClick={() => setShowForm(true)}
+          style={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+        >
+          + New item
+        </Button>
       </div>
 
-      {/* Filter panel — toggleable */}
+      {/* ── Filter panel ──────────────────────────── */}
       {showFilter && (
         <FilterPanel
           rooms={rooms}
-          tags={tags}
+          tags={localTags}
           categories={categories}
           onFilter={setFilter}
-          current={{ roomId, categoryId, tagId }}
+          current={{ roomIds, categoryIds, tagIds }}
         />
       )}
 
-      {/* Active filter chips */}
+      {/* ── Active filter chips ───────────────────── */}
       <ActiveFilterChips
         search={search}
-        categoryId={categoryId}
-        tagId={tagId}
-        roomId={roomId}
+        categoryIds={categoryIds}
+        tagIds={tagIds}
+        roomIds={roomIds}
         categories={categories}
-        tags={tags}
+        tags={localTags}
         rooms={rooms}
-        onRemove={(key) => setFilter(key, null)}
+        onRemove={(key, id) => {
+          if (key === 'search') setFilter('search', null)
+          else {
+            const current = key === 'categoryIds' ? categoryIds
+              : key === 'tagIds' ? tagIds : roomIds
+            setFilter(key, current.filter(x => x !== id))
+          }
+        }}
         onClearAll={clearFilters}
       />
 
-      {/* Error */}
+      {/* ── Error ─────────────────────────────────── */}
       {error && (
-        <p
-          className="text-xs font-mono"
-          style={{ color: 'var(--danger)' }}
-        >
+        <p className="text-xs font-mono" style={{ color: 'var(--danger)' }}>
           {error}
         </p>
       )}
 
-      {/* Loading */}
+      {/* ── Loading ───────────────────────────────── */}
       {loading && (
-        <p
-          className="text-xs font-mono py-8 text-center"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          Loading...
-        </p>
+        <div className="py-16 text-center">
+          <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+            Loading...
+          </p>
+        </div>
       )}
 
-      {/* Item list — table on desktop, cards on mobile */}
+      {/* ── Item list ─────────────────────────────── */}
       {!loading && (
         isMobile ? (
           <div className="flex flex-col gap-2">
+            {items.length === 0 && (
+              <div className="py-16 text-center">
+                <p className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
+                  No items found
+                </p>
+                <p className="font-mono text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
+                  Press <kbd className="border border-[var(--border)] px-1 rounded">N</kbd> to add one
+                </p>
+              </div>
+            )}
             {items.map(item => (
               <ItemCard
                 key={item.id}
@@ -178,7 +209,10 @@ export function ItemsPage() {
             ))}
           </div>
         ) : (
-          <div className="card overflow-hidden">
+          <div
+            className="overflow-hidden rounded-[var(--radius-md)]"
+            style={{ border: '1px solid var(--border)' }}
+          >
             <ItemTable
               items={items}
               selectedIds={selectedIds}
@@ -192,27 +226,22 @@ export function ItemsPage() {
         )
       )}
 
-      {/* Pagination */}
+      {/* ── Pagination ────────────────────────────── */}
       {!loading && total > limit && (
-        <div className="flex items-center justify-between">
-          <p
-            className="font-mono text-xs"
-            style={{ color: 'var(--text-muted)' }}
-          >
+        <div className="flex items-center justify-between pt-2">
+          <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
             {skip + 1}–{Math.min(skip + limit, total)} of {total}
           </p>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
-              size="sm"
+              variant="ghost" size="sm"
               disabled={skip === 0}
               onClick={() => setFilter('skip', Math.max(0, skip - limit))}
             >
               ← Prev
             </Button>
             <Button
-              variant="ghost"
-              size="sm"
+              variant="ghost" size="sm"
               disabled={skip + limit >= total}
               onClick={() => setFilter('skip', skip + limit)}
             >
@@ -222,30 +251,30 @@ export function ItemsPage() {
         </div>
       )}
 
-      {/* Bulk actions bar */}
+      {/* ── Bulk actions ──────────────────────────── */}
       <BulkActions
         selectedIds={selectedIds}
         onDelete={handleBulkDelete}
         onClear={() => setSelectedIds([])}
       />
 
-      {/* Add / Edit modal */}
+      {/* ── Add / Edit modal ──────────────────────── */}
       <Modal
         isOpen={showForm}
         onClose={handleCloseForm}
         title={editItem ? 'Edit item' : 'New item'}
-        footer={null}  // Footer is inside ItemForm
       >
         <ItemForm
           initial={editItem}
           rooms={rooms}
-          tags={tags}
+          tags={localTags}
           categories={categories}
           onSubmit={handleSubmit}
           onCancel={handleCloseForm}
           submitLabel={editItem ? 'Save changes' : 'Add item'}
           showAddAnother={!editItem}
           onSubmitAndAnother={() => setShowForm(true)}
+          onTagCreated={handleTagCreated}
         />
       </Modal>
     </div>
