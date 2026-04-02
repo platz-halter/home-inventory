@@ -1,8 +1,6 @@
-from os import stat
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import Optional
-
 from app.database import get_db
 from app.schemas.item import Item, ItemCreate, ItemUpdate, ItemList
 from app import crud
@@ -10,6 +8,14 @@ from app import crud
 router = APIRouter(prefix="/api/items", tags=["items"])
 
 
+# ── Bulk operations MUST come before /{item_id} routes ──────────
+@router.delete("/bulk/delete", response_model=dict)
+def bulk_delete(item_ids: list[int], db: Session = Depends(get_db)):
+    count = crud.item.bulk_delete_items(db, item_ids)
+    return {"deleted": count}
+
+
+# ── Collection routes ────────────────────────────────────────────
 @router.get("/", response_model=ItemList)
 def list_items(
     skip: int = Query(default=0, ge=0),
@@ -32,18 +38,18 @@ def list_items(
     return ItemList(items=items, total=total, skip=skip, limit=limit)
 
 
-@router.get("/{item_id}", response_model=Item)
-def get_item(item_id: int, db: Session = Depends(get_db)):
-    db_item = crud.item.get_item(db, item_id)
-
-    if not db_item:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return db_item
-
-
 @router.post("/", response_model=Item, status_code=201)
 def create_item(item: ItemCreate, db: Session = Depends(get_db)):
     return crud.item.create_item(db, item)
+
+
+# ── Single item routes — dynamic {item_id} always last ──────────
+@router.get("/{item_id}", response_model=Item)
+def get_item(item_id: int, db: Session = Depends(get_db)):
+    db_item = crud.item.get_item(db, item_id)
+    if not db_item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return db_item
 
 
 @router.patch("/{item_id}", response_model=Item)
@@ -54,10 +60,9 @@ def update_item(item_id: int, item: ItemUpdate, db: Session = Depends(get_db)):
     return db_item
 
 
-@router.delete("/item_id", response_model=Item)
+@router.delete("/{item_id}", response_model=Item)
 def delete_item(item_id: int, db: Session = Depends(get_db)):
     db_item = crud.item.delete_item(db, item_id)
-
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
@@ -66,13 +71,6 @@ def delete_item(item_id: int, db: Session = Depends(get_db)):
 @router.post("/{item_id}/clone", response_model=Item, status_code=201)
 def clone_item(item_id: int, db: Session = Depends(get_db)):
     db_item = crud.item.clone_item(db, item_id)
-
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
-
-
-@router.delete("/bulk/delete", response_model=dict)
-def bulk_delete(item_ids: list[int], db: Session = Depends(get_db)):
-    count = crud.item.bulk_delete_items(db, item_ids)
-    return {"deleted": count}
