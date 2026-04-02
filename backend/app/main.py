@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import items, rooms, tags, categories
+from app.routers import items, rooms, tags, categories, stats
 
 app = FastAPI(title="Home Inventory API", version="0.1.0")
 
@@ -18,6 +18,7 @@ app.include_router(items.router)
 app.include_router(rooms.router)
 app.include_router(tags.router)
 app.include_router(categories.router)
+app.include_router(stats.router)
 
 
 @app.get("/health")

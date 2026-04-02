@@ -22,5 +22,10 @@ export function useRooms() {
     return room
   }
 
-  return { rooms, loading, error, createRoom }
+  const deleteRoom = async (id) => {
+    await roomsApi.delete(id)
+    setRooms(prev => prev.filter(r => r.id !== id))
+  }
+
+  return { rooms, loading, error, createRoom , deleteRoom}
 }
