@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/categories", tags=["categories"])
 
 @router.get("/", response_model=list[Category])
 def list_categories(db: Session = Depends(get_db)):
-    return crud.categories.get_categories
+    return crud.category.get_categories
 
 
 @router.post("/", response_model=Category, status_code=201)
