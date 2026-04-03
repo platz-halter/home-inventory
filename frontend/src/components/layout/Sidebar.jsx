@@ -2,89 +2,160 @@ import { NavLink } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
 
 const navItems = [
-  { to: '/',        label: 'Dashboard',  icon: '⊞' },
-  { to: '/items',   label: 'Inventory',  icon: '≡' },
-  { to: '/manage',  label: 'Manage',     icon: '⊙' },
+  { to: '/',       label: 'Dashboard',  icon: '⊞' },
+  { to: '/items',  label: 'Inventory',  icon: '≡' },
+  { to: '/manage', label: 'Manage',     icon: '⊙' },
 ]
 
 export function Sidebar() {
   const { theme, toggle } = useTheme()
 
   return (
-    <div
-      className="w-full h-screen sticky top-0 flex flex-col border-r"
-      style={{ borderColor: 'var(--border)', background: 'var(--bg-secondary)' }}
-    >
-      {/* Logo — with proper left padding */}
-      <div className="px-5 py-5 border-b" style={{ borderColor: 'var(--border)' }}>
-        <span
-          className="font-mono text-xs tracking-widest uppercase"
-          style={{ color: 'var(--text-muted)' }}
-        >
+    <div style={{
+      width: '100%',
+      height: '100vh',
+      position: 'sticky',
+      top: 0,
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'var(--bg-secondary)',
+      borderRight: '1px solid var(--border)',
+    }}>
+
+      {/* Logo */}
+      <div style={{
+        padding: '24px 20px 20px 20px',
+        borderBottom: '1px solid var(--border)',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '10px',
+          letterSpacing: '0.12em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          margin: 0,
+        }}>
           Home
-        </span>
-        <h1
-          className="font-mono text-sm font-medium mt-0.5"
-          style={{ color: 'var(--text-primary)' }}
-        >
+        </p>
+        <h1 style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '14px',
+          fontWeight: 500,
+          color: 'var(--text-primary)',
+          margin: '2px 0 0 0',
+        }}>
           Inventory
         </h1>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 py-3 flex flex-col gap-0.5">
+      {/* Nav */}
+      <nav style={{
+        flex: 1,
+        padding: '12px 10px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '2px',
+      }}>
         {navItems.map(({ to, label, icon }) => (
           <NavLink
             key={to}
             to={to}
             end={to === '/'}
-            className={({ isActive }) => `
-              flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)]
-              text-sm transition-colors duration-150
-              ${isActive
-                ? 'bg-[var(--accent)] text-[var(--accent-text)]'
-                : 'text-[var(--text-secondary)] hover:bg-[var(--bg-tertiary)] hover:text-[var(--text-primary)]'
-              }
-            `}
+            style={({ isActive }) => ({
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '9px 12px',
+              borderRadius: 'var(--radius-md)',
+              textDecoration: 'none',
+              fontSize: '14px',
+              fontFamily: 'var(--font-sans)',
+              transition: 'background 150ms ease, color 150ms ease',
+              background: isActive ? 'var(--accent)' : 'transparent',
+              color: isActive ? 'var(--accent-text)' : 'var(--text-secondary)',
+            })}
           >
-            {/* Icon centered in fixed width box */}
-            <span
-              className="font-mono text-base flex items-center justify-center"
-              style={{ width: '20px', lineHeight: 1 }}
-            >
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '15px',
+              width: '20px',
+              textAlign: 'center',
+              lineHeight: 1,
+              flexShrink: 0,
+            }}>
               {icon}
             </span>
-            <span>{label}</span>
+            {label}
           </NavLink>
         ))}
       </nav>
 
-      {/* Shortcut hint */}
-      <div className="px-5 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
-        <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
-          <kbd className="border border-[var(--border)] px-1.5 py-0.5 rounded text-xs">N</kbd>
+      {/* Shortcuts hint */}
+      <div style={{
+        padding: '12px 20px',
+        borderTop: '1px solid var(--border)',
+      }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          color: 'var(--text-muted)',
+          margin: 0,
+          lineHeight: 1.6,
+        }}>
+          <kbd style={{
+            border: '1px solid var(--border)',
+            borderRadius: '3px',
+            padding: '1px 5px',
+            fontSize: '10px',
+          }}>N</kbd>
           {' '}new item
           {' · '}
-          <kbd className="border border-[var(--border)] px-1.5 py-0.5 rounded text-xs">/</kbd>
+          <kbd style={{
+            border: '1px solid var(--border)',
+            borderRadius: '3px',
+            padding: '1px 5px',
+            fontSize: '10px',
+          }}>/</kbd>
           {' '}search
         </p>
       </div>
 
       {/* Theme toggle */}
-      <div className="px-3 py-3 border-t" style={{ borderColor: 'var(--border)' }}>
+      <div style={{
+        padding: '10px',
+        borderTop: '1px solid var(--border)',
+      }}>
         <button
           onClick={toggle}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)]
-                     text-sm transition-colors hover:bg-[var(--bg-tertiary)]"
-          style={{ color: 'var(--text-secondary)' }}
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            padding: '9px 12px',
+            borderRadius: 'var(--radius-md)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '14px',
+            fontFamily: 'var(--font-sans)',
+            color: 'var(--text-secondary)',
+            transition: 'background 150ms ease',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'none'}
         >
-          <span
-            className="font-mono text-base flex items-center justify-center"
-            style={{ width: '20px', lineHeight: 1 }}
-          >
+          <span style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '15px',
+            width: '20px',
+            textAlign: 'center',
+            lineHeight: 1,
+            flexShrink: 0,
+          }}>
             {theme === 'dark' ? '○' : '●'}
           </span>
-          <span>{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>
+          {theme === 'dark' ? 'Light mode' : 'Dark mode'}
         </button>
       </div>
     </div>

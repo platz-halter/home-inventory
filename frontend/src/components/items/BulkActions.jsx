@@ -5,30 +5,53 @@ export function BulkActions({ selectedIds, onDelete, onClear }) {
 
   return (
     <div
-      className="fixed bottom-16 md:bottom-4 left-1/2 -translate-x-1/2 z-30
-                 flex items-center gap-3 px-4 py-3 rounded-[var(--radius-md)]
-                 border shadow-lg"
       style={{
+        position: 'fixed',
+        bottom: '24px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 30,
+        display: 'flex',
+        alignItems: 'center',
+        gap: '16px',
+        padding: '14px 24px',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border-strong)',
         background: 'var(--bg-secondary)',
-        borderColor: 'var(--border-strong)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.15)'
+        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+        whiteSpace: 'nowrap',
+        minWidth: '320px',
       }}
     >
       <span
-        className="font-mono text-xs"
-        style={{ color: 'var(--text-secondary)' }}
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '13px',
+          color: 'var(--text-secondary)',
+          flex: 1,
+        }}
       >
-        {selectedIds.length} selected
+        {selectedIds.length} item{selectedIds.length !== 1 ? 's' : ''} selected
       </span>
-      <div className="w-px h-4" style={{ background: 'var(--border)' }} />
+
+      <div
+        style={{
+          width: '1px',
+          height: '20px',
+          background: 'var(--border)',
+          flexShrink: 0,
+        }}
+      />
+
       <Button
         variant="danger"
-        size="sm"
+        size="md"
         onClick={() => onDelete(selectedIds)}
       >
         Delete selected
       </Button>
-      <Button variant="ghost" size="sm" onClick={onClear}>
+
+      <Button variant="ghost" size="md" onClick={onClear}>
         Cancel
       </Button>
     </div>

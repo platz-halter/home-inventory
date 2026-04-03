@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '../ui/Button'
-import { Badge } from '../ui/Badge'
 import { tagsApi } from '../../api/tags'
 
 const EMPTY_FORM = {
@@ -14,55 +13,20 @@ const EMPTY_FORM = {
   category_ids: [],
 }
 
-// Inline tag creator — type to filter existing, Enter to create new
 function TagSelector({ allTags, selectedIds, onChange, onTagCreated }) {
   const [input, setInput] = useState('')
   const [creating, setCreating] = useState(false)
-  const inputRef = useRef(null)
+  const inputRef = useRef(null)   // ← inputRef lives HERE inside TagSelector
 
-  const filtered = allTags.filter(t =>
-    t.name.toLowerCase().includes(input.toLowerCase())
-  )
+  const filtered = input.trim()
+    ? allTags.filter(t => t.name.toLowerCase().includes(input.toLowerCase()))
+    : []
 
   const exactMatch = allTags.find(
-    t => t.name.toLowerCase() === input.toLowerCase()
+    t => t.name.toLowerCase() === input.trim().toLowerCase()
   )
 
-  const handleKeyDown = async (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault()
-      if (!input.trim()) return
-
-      if (exactMatch) {
-        // Select existing tag
-        if (!selectedIds.includes(exactMatch.id)) {
-          onChange([...selectedIds, exactMatch.id])
-        }
-        setInput('')
-        return
-      }
-
-      // Create new tag
-      setCreating(true)
-      try {
-        const newTag = await tagsApi.create({ name: input.trim() })
-        onTagCreated(newTag)
-        onChange([...selectedIds, newTag.id])
-        setInput('')
-      } catch (e) {
-        console.error('Failed to create tag:', e.message)
-      } finally {
-        setCreating(false)
-      }
-    }
-
-    if (e.key === 'Backspace' && input === '' && selectedIds.length > 0) {
-      // Remove last selected tag when backspacing on empty input
-      onChange(selectedIds.slice(0, -1))
-    }
-  }
-
-  const toggle = (id) => {
+  const toggleTag = (id) => {
     onChange(
       selectedIds.includes(id)
         ? selectedIds.filter(x => x !== id)
@@ -70,28 +34,88 @@ function TagSelector({ allTags, selectedIds, onChange, onTagCreated }) {
     )
   }
 
+  const handleKeyDown = async (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      const val = input.trim()
+      if (!val) return
+      if (exactMatch) {
+        toggleTag(exactMatch.id)
+        setInput('')
+        return
+      }
+      setCreating(true)
+      try {
+        const newTag = await tagsApi.create({ name: val })
+        onTagCreated(newTag)
+        onChange([...selectedIds, newTag.id])
+        setInput('')
+      } catch (err) {
+        console.error('Tag creation failed:', err.message)
+      } finally {
+        setCreating(false)
+      }
+    }
+    if (e.key === 'Backspace' && input === '' && selectedIds.length > 0) {
+      onChange(selectedIds.slice(0, -1))
+    }
+  }
+
   return (
-    <div className="flex flex-col gap-2">
-      {/* Selected tags as chips + input in one row */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      {/* Selected tags + input combined */}
       <div
-        className="flex flex-wrap gap-1.5 p-2 border rounded-[var(--radius-sm)] min-h-10 cursor-text"
-        style={{
-          borderColor: 'var(--border)',
-          background: 'var(--bg-primary)',
-        }}
         onClick={() => inputRef.current?.focus()}
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '8px 12px',
+          minHeight: '42px',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-sm)',
+          background: 'var(--input-bg)',
+          cursor: 'text',
+        }}
       >
         {selectedIds.map(id => {
           const tag = allTags.find(t => t.id === id)
           if (!tag) return null
           return (
-            <Badge
+            <span
               key={id}
-              variant="active"
-              onRemove={() => toggle(id)}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                fontSize: '12px',
+                fontFamily: 'var(--font-mono)',
+                background: 'var(--accent)',
+                color: 'var(--accent-text)',
+                borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--accent)',
+              }}
             >
               {tag.name}
-            </Badge>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleTag(id) }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'inherit',
+                  cursor: 'pointer',
+                  padding: '0 0 0 2px',
+                  fontSize: '14px',
+                  lineHeight: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                ×
+              </button>
+            </span>
           )
         })}
         <input
@@ -100,54 +124,85 @@ function TagSelector({ allTags, selectedIds, onChange, onTagCreated }) {
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={selectedIds.length === 0 ? 'Type to search or create...' : ''}
-          className="flex-1 min-w-24 text-sm bg-transparent focus:outline-none"
-          style={{
-            color: 'var(--text-primary)',
-            fontFamily: 'var(--font-sans)',
-          }}
+          placeholder={selectedIds.length === 0 ? 'Type to search or press Enter to create...' : ''}
           disabled={creating}
+          style={{
+            flex: 1,
+            minWidth: '140px',
+            border: 'none',
+            outline: 'none',
+            background: 'transparent',
+            color: 'var(--text-primary)',
+            fontSize: '14px',
+            fontFamily: 'var(--font-sans)',
+            padding: 0,
+          }}
         />
       </div>
 
-      {/* Dropdown of matching existing tags */}
-      {input && filtered.length > 0 && (
+      {/* Dropdown — only when typing */}
+      {filtered.length > 0 && (
         <div
-          className="card p-1 flex flex-col gap-0.5"
-          style={{ maxHeight: '160px', overflowY: 'auto' }}
+          style={{
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-secondary)',
+            overflow: 'hidden',
+            maxHeight: '180px',
+            overflowY: 'auto',
+          }}
         >
-          {filtered.map(tag => (
-            <button
-              key={tag.id}
-              onClick={() => { toggle(tag.id); setInput('') }}
-              className="text-left px-3 py-1.5 text-sm rounded-[var(--radius-sm)] transition-colors"
-              style={{
-                color: selectedIds.includes(tag.id)
-                  ? 'var(--text-muted)'
-                  : 'var(--text-primary)',
-                background: selectedIds.includes(tag.id)
-                  ? 'var(--bg-tertiary)'
-                  : 'transparent',
-              }}
-            >
-              {tag.name}
-              {selectedIds.includes(tag.id) && (
-                <span className="ml-2 font-mono text-xs">✓</span>
-              )}
-            </button>
-          ))}
+          {filtered.map((tag, i) => {
+            const selected = selectedIds.includes(tag.id)
+            return (
+              <div
+                key={tag.id}
+                onClick={() => { toggleTag(tag.id); setInput('') }}
+                style={{
+                  padding: '10px 14px',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                  background: selected ? 'var(--bg-tertiary)' : 'transparent',
+                  color: selected ? 'var(--text-muted)' : 'var(--text-primary)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                {tag.name}
+                {selected && (
+                  <span style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '12px',
+                    color: 'var(--text-muted)',
+                  }}>
+                    ✓ selected
+                  </span>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
-      {/* Create new tag hint */}
-      {input && !exactMatch && (
-        <p
-          className="text-xs font-mono"
-          style={{ color: 'var(--text-muted)' }}
-        >
+      {/* Create hint */}
+      {input.trim() && !exactMatch && (
+        <p style={{
+          fontSize: '12px',
+          fontFamily: 'var(--font-mono)',
+          color: 'var(--text-muted)',
+        }}>
           Press{' '}
-          <span className="border border-[var(--border)] px-1 rounded">Enter</span>
-          {' '}to create tag "{input}"
+          <kbd style={{
+            border: '1px solid var(--border)',
+            borderRadius: '3px',
+            padding: '1px 5px',
+            fontSize: '11px',
+          }}>
+            Enter
+          </kbd>
+          {' '}to create "{input.trim()}"
           {creating && ' — creating...'}
         </p>
       )}
@@ -155,39 +210,53 @@ function TagSelector({ allTags, selectedIds, onChange, onTagCreated }) {
   )
 }
 
-// Simple category toggle — categories are more structured, no free creation
 function CategorySelector({ allCategories, selectedIds, onChange }) {
-  const toggle = (id) => {
-    onChange(
-      selectedIds.includes(id)
-        ? selectedIds.filter(x => x !== id)
-        : [...selectedIds, id]
-    )
-  }
-
   if (allCategories.length === 0) {
     return (
-      <p
-        className="text-xs font-mono"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        No categories yet — add them in the Manage page
+      <p style={{
+        fontSize: '12px',
+        fontFamily: 'var(--font-mono)',
+        color: 'var(--text-muted)',
+      }}>
+        No categories yet — add them in Manage
       </p>
     )
   }
 
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {allCategories.map(c => (
-        <Badge
-          key={c.id}
-          variant={selectedIds.includes(c.id) ? 'active' : 'default'}
-          onClick={() => toggle(c.id)}
-          style={{ cursor: 'pointer', userSelect: 'none' }}
-        >
-          {c.name}
-        </Badge>
-      ))}
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+      {allCategories.map(c => {
+        const selected = selectedIds.includes(c.id)
+        return (
+          <span
+            key={c.id}
+            onClick={() => {
+              onChange(
+                selected
+                  ? selectedIds.filter(x => x !== c.id)
+                  : [...selectedIds, c.id]
+              )
+            }}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              padding: '4px 10px',
+              fontSize: '12px',
+              fontFamily: 'var(--font-mono)',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid',
+              cursor: 'pointer',
+              userSelect: 'none',
+              transition: 'all 150ms ease',
+              background: selected ? 'var(--accent)' : 'var(--bg-tertiary)',
+              color: selected ? 'var(--accent-text)' : 'var(--text-secondary)',
+              borderColor: selected ? 'var(--accent)' : 'var(--border)',
+            }}
+          >
+            {c.name}
+          </span>
+        )
+      })}
     </div>
   )
 }
@@ -207,10 +276,8 @@ export function ItemForm({
   const [form, setForm] = useState(EMPTY_FORM)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  // Local copy of tags so newly created ones appear immediately
   const [localTags, setLocalTags] = useState(tags)
 
-  // Keep localTags in sync when parent tags prop changes
   useEffect(() => { setLocalTags(tags) }, [tags])
 
   useEffect(() => {
@@ -221,9 +288,7 @@ export function ItemForm({
         shelf: initial.shelf || '',
         level_or_drawer: initial.level_or_drawer || '',
         comments: initial.comments || '',
-        fill_level: initial.fill_level != null
-          ? String(initial.fill_level)
-          : '',
+        fill_level: initial.fill_level != null ? String(initial.fill_level) : '',
         tag_ids: initial.tags.map(t => t.id),
         category_ids: initial.categories.map(c => c.id),
       })
@@ -282,56 +347,74 @@ export function ItemForm({
     }
   }
 
-  const inputClass = `
-    w-full px-3 py-2.5 text-sm border rounded-[var(--radius-sm)]
-    focus:outline-none focus:border-[var(--border-strong)]
-    transition-colors
-  `
-
   const inputStyle = {
+    width: '100%',
+    padding: '10px 12px',
+    fontSize: '14px',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-sm)',
     background: 'var(--input-bg)',
     color: 'var(--text-primary)',
-    borderColor: 'var(--border)',
     fontFamily: 'var(--font-sans)',
+    outline: 'none',
+    transition: 'border-color 150ms ease',
+    boxSizing: 'border-box',
   }
 
-  const labelClass = `block font-mono text-xs mb-1.5`
+  const labelStyle = {
+    display: 'block',
+    fontFamily: 'var(--font-mono)',
+    fontSize: '11px',
+    color: 'var(--text-muted)',
+    marginBottom: '6px',
+    letterSpacing: '0.05em',
+  }
 
   return (
-    <div className="flex flex-col gap-5">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' , padding: '0 1rem', boxSizing:'border-box'}}>
+
+      {/* Error */}
       {error && (
-        <p
-          className="text-xs font-mono px-3 py-2 rounded-[var(--radius-sm)] border"
-          style={{
-            color: 'var(--danger)',
-            borderColor: 'var(--danger)',
-            background: 'var(--danger-muted)',
-          }}
-        >
+        <p style={{
+          fontSize: '12px',
+          fontFamily: 'var(--font-mono)',
+          padding: '8px 12px',
+          borderRadius: 'var(--radius-sm)',
+          border: '1px solid var(--danger)',
+          color: 'var(--danger)',
+          background: 'var(--danger-muted)',
+        }}>
           {error}
         </p>
       )}
 
       {/* Names */}
       <div>
-        <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
-          Name(s) *
-        </label>
-        <div className="flex flex-col gap-2">
+        <label style={labelStyle}>Name(s) *</label>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {form.names.map((name, i) => (
-            <div key={i} className="flex gap-2">
+            <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
               <input
-                className={inputClass}
                 value={name}
                 onChange={e => setName(i, e.target.value)}
                 placeholder={i === 0 ? 'Primary name' : 'Alias'}
                 autoFocus={i === 0 && !initial}
+                style={inputStyle}
               />
               {form.names.length > 1 && (
                 <button
                   onClick={() => removeName(i)}
-                  className="px-2 transition-colors font-mono"
-                  style={{ color: 'var(--text-muted)' }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '18px',
+                    color: 'var(--text-muted)',
+                    padding: '0 4px',
+                    lineHeight: 1,
+                    flexShrink: 0,
+                  }}
                   onMouseEnter={e => e.target.style.color = 'var(--danger)'}
                   onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
                 >
@@ -342,8 +425,16 @@ export function ItemForm({
           ))}
           <button
             onClick={addName}
-            className="text-xs font-mono text-left transition-colors"
-            style={{ color: 'var(--text-muted)' }}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              textAlign: 'left',
+              padding: 0,
+            }}
             onMouseEnter={e => e.target.style.color = 'var(--text-primary)'}
             onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
           >
@@ -354,13 +445,11 @@ export function ItemForm({
 
       {/* Room */}
       <div>
-        <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
-          Room
-        </label>
+        <label style={labelStyle}>Room</label>
         <select
-          className={inputClass}
           value={form.room_id}
           onChange={e => set('room_id', e.target.value)}
+          style={inputStyle}
         >
           <option value="">No room</option>
           {rooms.map(r => (
@@ -370,37 +459,33 @@ export function ItemForm({
       </div>
 
       {/* Shelf + Level */}
-      <div className="grid grid-cols-2 gap-3">
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
         <div>
-          <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
-            Shelf / Closet
-          </label>
+          <label style={labelStyle}>Shelf / Closet</label>
           <input
-            className={inputClass}
             value={form.shelf}
             onChange={e => set('shelf', e.target.value)}
             placeholder="e.g. Cabinet A"
+            style={inputStyle}
           />
         </div>
         <div>
-          <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
-            Level / Drawer
-          </label>
+          <label style={labelStyle}>Level / Drawer</label>
           <input
-            className={inputClass}
             value={form.level_or_drawer}
             onChange={e => set('level_or_drawer', e.target.value)}
             placeholder="e.g. Top shelf"
+            style={inputStyle}
           />
         </div>
       </div>
 
       {/* Fill level */}
       <div>
-        <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
+        <label style={labelStyle}>
           Fill level
           {form.fill_level !== '' && (
-            <span className="ml-2" style={{ color: 'var(--text-secondary)' }}>
+            <span style={{ marginLeft: '8px', color: 'var(--text-secondary)', fontFamily: 'var(--font-sans)' }}>
               {Math.round(parseFloat(form.fill_level) * 100)}%
             </span>
           )}
@@ -410,46 +495,50 @@ export function ItemForm({
           min="0" max="1" step="0.05"
           value={form.fill_level || 0}
           onChange={e => set('fill_level', e.target.value)}
-          className="w-full"
-          style={{ accentColor: 'var(--accent)' }}
+          style={{ width: '100%', accentColor: 'var(--accent)' }}
         />
-        <div className="flex justify-between mt-1">
-          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
             Empty
           </span>
           <button
             onClick={() => set('fill_level', '')}
-            className="font-mono text-xs transition-colors"
-            style={{ color: 'var(--text-muted)' }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)',
+            }}
             onMouseEnter={e => e.target.style.color = 'var(--text-primary)'}
             onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
           >
             clear
           </button>
-          <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '11px', color: 'var(--text-muted)' }}>
             Full
           </span>
         </div>
       </div>
 
-      {/* Tags — free type + select */}
-
-      <div
-        className="flex flex-wrap gap-1.5 px-3 py-2 border rounded-[var(--radius-sm)] cursor-text"
-        style={{
-          borderColor: 'var(--border)',
-          background: 'var(--input-bg)',
-          minHeight: '42px',      // matches single input height exactly
-          alignItems: 'center',
-        }}
-        onClick={() => inputRef.current?.focus()}
-      ></div>
-
-      {/* Categories — click to toggle */}
+      {/* Tags — THIS is where TagSelector is actually rendered */}
       <div>
-        <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
+        <label style={labelStyle}>
+          Tags
+          <span style={{ marginLeft: '8px', fontFamily: 'var(--font-sans)', fontWeight: 'normal' }}>
+            — type to search or create
+          </span>
+        </label>
+        <TagSelector
+          allTags={localTags}
+          selectedIds={form.tag_ids}
+          onChange={(ids) => set('tag_ids', ids)}
+          onTagCreated={handleTagCreated}
+        />
+      </div>
+
+      {/* Categories */}
+      <div>
+        <label style={labelStyle}>
           Categories
-          <span className="ml-2 font-normal" style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-sans)' }}>
+          <span style={{ marginLeft: '8px', fontFamily: 'var(--font-sans)', fontWeight: 'normal' }}>
             — click to toggle
           </span>
         </label>
@@ -462,21 +551,18 @@ export function ItemForm({
 
       {/* Comments */}
       <div>
-        <label className={labelClass} style={{ color: 'var(--text-muted)' }}>
-          Comments
-        </label>
+        <label style={labelStyle}>Comments</label>
         <textarea
-          className={inputClass}
           value={form.comments}
           onChange={e => set('comments', e.target.value)}
           rows={3}
           placeholder="Any notes..."
-          style={{ resize: 'vertical' }}
+          style={{ ...inputStyle, resize: 'vertical' }}
         />
       </div>
 
       {/* Actions */}
-      <div className="flex gap-2 pt-2 flex-wrap">
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', paddingTop: '8px' }}>
         <Button
           variant="primary"
           onClick={() => handleSubmit(false)}

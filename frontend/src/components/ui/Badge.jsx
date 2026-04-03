@@ -1,24 +1,56 @@
-// Used for tags and categories throughout the app
-export function Badge({ children, onRemove, variant = 'default' }) {
-  const base = `
-    inline-flex items-center gap-1
-    px-2 py-0.5 text-xs font-mono
-    border rounded-[var(--radius-sm)]
-    transition-colors duration-150
-  `
+export function Badge({ children, onRemove, onClick, variant = 'default', style = {} }) {
+  const base = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '4px',
+    padding: '2px 8px',
+    fontSize: '12px',
+    fontFamily: 'var(--font-mono)',
+    borderRadius: 'var(--radius-sm)',
+    border: '1px solid',
+    transition: 'all 150ms ease',
+    cursor: onClick || onRemove ? 'pointer' : 'default',
+    userSelect: 'none',
+    whiteSpace: 'nowrap',
+  }
+
   const variants = {
-    default: 'bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border-[var(--border)]',
-    active:  'bg-[var(--accent)] text-[var(--accent-text)] border-[var(--accent)]',
+    default: {
+      background: 'var(--bg-tertiary)',
+      color: 'var(--text-secondary)',
+      borderColor: 'var(--border)',
+    },
+    active: {
+      background: 'var(--accent)',
+      color: 'var(--accent-text)',
+      borderColor: 'var(--accent)',
+    },
   }
 
   return (
-    <span className={`${base} ${variants[variant]}`}>
+    <span
+      style={{ ...base, ...variants[variant], ...style }}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter') onClick(e) } : undefined}
+    >
       {children}
       {onRemove && (
         <button
-          onClick={onRemove}
-          className="ml-0.5 hover:text-[var(--danger)] transition-colors"
-          aria-label={`Remove ${children}`}
+          onClick={(e) => { e.stopPropagation(); onRemove() }}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: '0 0 0 2px',
+            cursor: 'pointer',
+            color: 'inherit',
+            fontSize: '14px',
+            lineHeight: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
+          aria-label="Remove"
         >
           ×
         </button>

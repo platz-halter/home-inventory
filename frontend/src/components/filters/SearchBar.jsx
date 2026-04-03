@@ -23,7 +23,7 @@ export function SearchBar({ value, onChange }) {
         className="absolute left-3 top-1/2 -translate-y-1/2 font-mono text-xs pointer-events-none"
         style={{ color: 'var(--text-muted)' }}
       >
-        /
+        
       </span>
       <input
         ref={ref}

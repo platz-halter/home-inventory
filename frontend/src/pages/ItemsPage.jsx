@@ -24,7 +24,7 @@ export function ItemsPage() {
   } = useItems()
 
   const { rooms } = useRooms()
-  const { tags, createTag } = useTags()
+  const { tags } = useTags()
   const { categories } = useCategories()
   const isMobile = useIsMobile()
 
@@ -34,24 +34,19 @@ export function ItemsPage() {
   const [selectedIds, setSelectedIds] = useState([])
   const [localTags, setLocalTags] = useState([])
 
-  // Keep localTags synced with fetched tags
   useEffect(() => { setLocalTags(tags) }, [tags])
 
   const [searchParams] = useSearchParams()
 
-  // Handle ?new=true from keyboard shortcut — works on any page
   useEffect(() => {
-    if (searchParams.get('new') === 'true') {
-      setShowForm(true)
-    }
+    if (searchParams.get('new') === 'true') setShowForm(true)
   }, [searchParams])
 
   useEffect(() => {
-  const handler = () => setShowForm(true)
-  window.addEventListener('open-new-item-form', handler)
-  return () => window.removeEventListener('open-new-item-form', handler)
-}, [])
-
+    const handler = () => setShowForm(true)
+    window.addEventListener('open-new-item-form', handler)
+    return () => window.removeEventListener('open-new-item-form', handler)
+  }, [])
 
   const handleSelect = (id) =>
     setSelectedIds(prev =>
@@ -98,25 +93,49 @@ export function ItemsPage() {
   ].filter(Boolean).length
 
   return (
-    <div className="flex flex-col gap-5">
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '24px',
+      // Extra horizontal breathing room inside the layout padding
+      paddingLeft: '8px',
+      paddingRight: '8px',
+    }}>
 
       {/* ── Page header ───────────────────────────── */}
-      <div className="flex items-center justify-between">
-        <h1
-          className="font-mono text-xs tracking-widest uppercase"
-          style={{ color: 'var(--text-muted)' }}
-        >
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingBottom: '8px',
+        borderBottom: '1px solid var(--border)',
+      }}>
+        <h1 style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          margin: 0,
+        }}>
           Inventory
-          <span className="ml-2">({total})</span>
+          <span style={{ marginLeft: '8px' }}>({total})</span>
         </h1>
       </div>
 
-      {/* ── Search + filter + add in one row ──────── */}
-      <div className="flex items-center gap-2">
-        <SearchBar
-          value={search}
-          onChange={val => setFilter('search', val)}
-        />
+      {/* ── Search + Filter + New Item ────────────── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+      }}>
+        <div style={{ flex: 1 }}>
+          <SearchBar
+            value={search}
+            onChange={val => setFilter('search', val)}
+          />
+        </div>
+
         <Button
           variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
           size="sm"
@@ -125,7 +144,7 @@ export function ItemsPage() {
         >
           Filter {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
         </Button>
-        {/* Add button on same row as search */}
+
         <Button
           size="sm"
           onClick={() => setShowForm(true)}
@@ -137,13 +156,15 @@ export function ItemsPage() {
 
       {/* ── Filter panel ──────────────────────────── */}
       {showFilter && (
-        <FilterPanel
-          rooms={rooms}
-          tags={localTags}
-          categories={categories}
-          onFilter={setFilter}
-          current={{ roomIds, categoryIds, tagIds }}
-        />
+        <div style={{ marginTop: '-8px' }}>
+          <FilterPanel
+            rooms={rooms}
+            tags={localTags}
+            categories={categories}
+            onFilter={setFilter}
+            current={{ roomIds, categoryIds, tagIds }}
+          />
+        </div>
       )}
 
       {/* ── Active filter chips ───────────────────── */}
@@ -168,15 +189,25 @@ export function ItemsPage() {
 
       {/* ── Error ─────────────────────────────────── */}
       {error && (
-        <p className="text-xs font-mono" style={{ color: 'var(--danger)' }}>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '12px',
+          color: 'var(--danger)',
+          margin: 0,
+        }}>
           {error}
         </p>
       )}
 
       {/* ── Loading ───────────────────────────────── */}
       {loading && (
-        <div className="py-16 text-center">
-          <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div style={{ padding: '64px 0', textAlign: 'center' }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+            margin: 0,
+          }}>
             Loading...
           </p>
         </div>
@@ -185,14 +216,24 @@ export function ItemsPage() {
       {/* ── Item list ─────────────────────────────── */}
       {!loading && (
         isMobile ? (
-          <div className="flex flex-col gap-2">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {items.length === 0 && (
-              <div className="py-16 text-center">
-                <p className="font-mono text-sm" style={{ color: 'var(--text-muted)' }}>
+              <div style={{ padding: '64px 0', textAlign: 'center' }}>
+                <p style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '14px',
+                  color: 'var(--text-muted)',
+                  margin: '0 0 8px 0',
+                }}>
                   No items found
                 </p>
-                <p className="font-mono text-xs mt-2" style={{ color: 'var(--text-muted)' }}>
-                  Press <kbd className="border border-[var(--border)] px-1 rounded">N</kbd> to add one
+                <p style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '12px',
+                  color: 'var(--text-muted)',
+                  margin: 0,
+                }}>
+                  Press N to add one
                 </p>
               </div>
             )}
@@ -209,10 +250,13 @@ export function ItemsPage() {
             ))}
           </div>
         ) : (
-          <div
-            className="overflow-hidden rounded-[var(--radius-md)]"
-            style={{ border: '1px solid var(--border)' }}
-          >
+          <div style={{
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            overflow: 'hidden',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}>
             <ItemTable
               items={items}
               selectedIds={selectedIds}
@@ -226,22 +270,66 @@ export function ItemsPage() {
         )
       )}
 
+      {/* ── Empty state (desktop) ─────────────────── */}
+      {!loading && items.length === 0 && !isMobile && (
+        <div style={{ padding: '64px 0', textAlign: 'center' }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '14px',
+            color: 'var(--text-muted)',
+            margin: '0 0 8px 0',
+          }}>
+            No items found
+          </p>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+            margin: 0,
+          }}>
+            Press{' '}
+            <kbd style={{
+              border: '1px solid var(--border)',
+              borderRadius: '3px',
+              padding: '1px 6px',
+              fontSize: '11px',
+            }}>
+              N
+            </kbd>
+            {' '}to add your first item
+          </p>
+        </div>
+      )}
+
       {/* ── Pagination ────────────────────────────── */}
       {!loading && total > limit && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingTop: '8px',
+          borderTop: '1px solid var(--border)',
+        }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+            margin: 0,
+          }}>
             {skip + 1}–{Math.min(skip + limit, total)} of {total}
           </p>
-          <div className="flex gap-2">
+          <div style={{ display: 'flex', gap: '8px' }}>
             <Button
-              variant="ghost" size="sm"
+              variant="ghost"
+              size="sm"
               disabled={skip === 0}
               onClick={() => setFilter('skip', Math.max(0, skip - limit))}
             >
               ← Prev
             </Button>
             <Button
-              variant="ghost" size="sm"
+              variant="ghost"
+              size="sm"
               disabled={skip + limit >= total}
               onClick={() => setFilter('skip', skip + limit)}
             >

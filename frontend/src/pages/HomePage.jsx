@@ -35,35 +35,57 @@ function QuickAction({ icon, label, description, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="text-left flex items-start gap-4 p-5
-                 rounded-[var(--radius-md)] w-full transition-colors"
-      style={{
-        border: '1px solid var(--border)',
-        background: 'var(--bg-secondary)',
-      }}
       onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
       onMouseLeave={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+      style={{
+        textAlign: 'left',
+        display: 'flex',
+        alignItems: 'center',    // center vertically — not flex-start
+        gap: '16px',
+        padding: '20px',
+        borderRadius: 'var(--radius-md)',
+        border: '1px solid var(--border)',
+        background: 'var(--bg-secondary)',
+        width: '100%',
+        cursor: 'pointer',
+        transition: 'background 150ms ease',
+      }}
     >
-      {/* Fixed-size icon box — always centered */}
+      {/* Icon box — exact size, no extra line height */}
       <div
-        className="flex items-center justify-center flex-shrink-0
-                   rounded-[var(--radius-sm)] font-mono text-base"
         style={{
           width: '36px',
           height: '36px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           background: 'var(--bg-tertiary)',
           border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-sm)',
+          fontFamily: 'var(--font-mono)',
+          fontSize: '16px',
+          lineHeight: '1',          // collapse extra line height
           color: 'var(--text-secondary)',
-          lineHeight: 1,
         }}
       >
         {icon}
       </div>
-      <div className="flex flex-col gap-0.5 pt-0.5">
-        <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+
+      {/* Text — vertically centered by parent alignItems: center */}
+      <div>
+        <p style={{
+          fontSize: '14px',
+          fontWeight: 500,
+          color: 'var(--text-primary)',
+          marginBottom: '2px',
+        }}>
           {label}
         </p>
-        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+        <p style={{
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+        }}>
           {description}
         </p>
       </div>

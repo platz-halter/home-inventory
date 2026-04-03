@@ -3,9 +3,7 @@ import { useTags } from '../hooks/useTags'
 import { useCategories } from '../hooks/useCategories'
 import { useRooms } from '../hooks/useRooms'
 import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
 
-// Reusable section for managing a single resource type
 function ManageSection({ title, items, onCreate, onDelete, placeholder }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -40,74 +38,177 @@ function ManageSection({ title, items, onCreate, onDelete, placeholder }) {
   }
 
   return (
-    <div className="card p-4 flex flex-col gap-4">
+    <div style={{
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--bg-secondary)',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',   // keeps children inside rounded corners
+    }}>
+
       {/* Section header */}
-      <div className="flex items-center justify-between">
-        <h2
-          className="font-mono text-xs tracking-widest uppercase"
-          style={{ color: 'var(--text-muted)' }}
-        >
+      <div style={{
+        padding: '16px 20px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}>
+        <h2 style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          margin: 0,
+        }}>
           {title}
-          <span className="ml-2">({items.length})</span>
+          <span style={{ marginLeft: '8px' }}>({items.length})</span>
         </h2>
       </div>
 
-      {/* Inline create input */}
-      <div className="flex gap-2">
+      {/* Create input */}
+      <div style={{
+        padding: '16px 20px',
+        borderBottom: '1px solid var(--border)',
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'center',
+      }}>
         <input
           type="text"
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKey}
           placeholder={placeholder}
-          className="flex-1 px-3 py-2 text-sm border rounded-[var(--radius-sm)]
-                     bg-[var(--bg-primary)] text-[var(--text-primary)]
-                     border-[var(--border)] focus:outline-none
-                     focus:border-[var(--border-strong)] transition-colors"
+          style={{
+            flex: 1,
+            padding: '9px 12px',
+            fontSize: '14px',
+            fontFamily: 'var(--font-sans)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--input-bg)',
+            color: 'var(--text-primary)',
+            outline: 'none',
+          }}
+          onFocus={e => e.target.style.borderColor = 'var(--border-strong)'}
+          onBlur={e => e.target.style.borderColor = 'var(--border)'}
         />
-        <Button
-          size="sm"
+        <button
           onClick={handleCreate}
           disabled={loading || !input.trim()}
+          style={{
+            // Match the input height exactly
+            padding: '9px 12px',        // same as the input
+            aspectRatio: '1 / 1',       // makes it a perfect square
+
+            // Visual style
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            background: 'var(--bg-tertiary)',
+            color: 'var(--text-primary)',
+            cursor: 'pointer',
+            flexShrink: 0,
+
+            // Center the + symbol
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+
+            // Typography
+            fontSize: '18px',
+            lineHeight: 1,
+            fontFamily: 'var(--font-mono)',
+
+            // Disabled state
+            opacity: loading || !input.trim() ? 0.4 : 1,
+
+            transition: 'background 150ms ease',
+          }}
+          onMouseEnter={e => {
+            if (!loading && input.trim()) {
+              e.currentTarget.style.background = 'var(--accent)'
+              e.currentTarget.style.color = 'var(--accent-text)'
+            }
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'var(--bg-tertiary)'
+            e.currentTarget.style.color = 'var(--text-primary)'
+          }}
+          aria-label="Add"
         >
-          {loading ? '...' : 'Add'}
-        </Button>
+          {loading ? '...' : '+'}
+        </button>
       </div>
 
+      {/* Error */}
       {error && (
-        <p
-          className="text-xs font-mono"
-          style={{ color: 'var(--danger)' }}
-        >
-          {error}
-        </p>
+        <div style={{ padding: '10px 20px', borderBottom: '1px solid var(--border)' }}>
+          <p style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '12px',
+            color: 'var(--danger)',
+            margin: 0,
+          }}>
+            {error}
+          </p>
+        </div>
       )}
 
       {/* Item list */}
-      {items.length === 0 ? (
-        <p
-          className="text-xs font-mono py-4 text-center"
-          style={{ color: 'var(--text-muted)' }}
-        >
-          None yet — add one above
-        </p>
-      ) : (
-        <div className="flex flex-col divide-y" style={{ borderColor: 'var(--border)' }}>
-          {items.map(item => (
+      <div style={{ flex: 1 }}>
+        {items.length === 0 ? (
+          <div style={{
+            padding: '32px 20px',
+            textAlign: 'center',
+          }}>
+            <p style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              margin: 0,
+            }}>
+              None yet — add one above
+            </p>
+          </div>
+        ) : (
+          items.map((item, i) => (
             <div
               key={item.id}
-              className="flex items-center justify-between py-2"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '12px 20px',
+                borderTop: i > 0 ? '1px solid var(--border)' : 'none',
+                transition: 'background 100ms ease',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-tertiary)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             >
-              <span
-                className="text-sm"
-                style={{ color: 'var(--text-primary)' }}
-              >
+              <span style={{
+                fontSize: '14px',
+                color: 'var(--text-primary)',
+                fontFamily: 'var(--font-sans)',
+              }}>
                 {item.name}
               </span>
               <button
                 onClick={() => handleDelete(item.id)}
-                className="font-mono text-sm px-2 transition-colors"
-                style={{ color: 'var(--text-muted)' }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '18px',
+                  lineHeight: 1,
+                  color: 'var(--text-muted)',
+                  padding: '0 4px',
+                  marginLeft: '12px',
+                  flexShrink: 0,
+                }}
                 onMouseEnter={e => e.target.style.color = 'var(--danger)'}
                 onMouseLeave={e => e.target.style.color = 'var(--text-muted)'}
                 aria-label={`Delete ${item.name}`}
@@ -115,9 +216,9 @@ function ManageSection({ title, items, onCreate, onDelete, placeholder }) {
                 ×
               </button>
             </div>
-          ))}
-        </div>
-      )}
+          ))
+        )}
+      </div>
     </div>
   )
 }
@@ -125,45 +226,65 @@ function ManageSection({ title, items, onCreate, onDelete, placeholder }) {
 export function ManagePage() {
   const { tags, createTag, deleteTag } = useTags()
   const { categories, createCategory, deleteCategory } = useCategories()
-  const { rooms, createRoom } = useRooms()
+  const { rooms, createRoom, deleteRoom } = useRooms()
 
-  // Rooms don't have a deleteRoom in useRooms yet — we'll note that
   const handleDeleteRoom = async (id) => {
-    // Rooms with items can't be deleted safely without cascade handling
-    // For now we inform the user — Phase 7 can add this
-    alert('Room deletion coming in a future update. Remove all items from the room first.')
+    if (!confirm('Delete this room? Items in this room will become unlocated.')) return
+    try {
+      await deleteRoom(id)
+    } catch (e) {
+      alert('Could not delete room: ' + e.message)
+    }
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+
       {/* Page header */}
       <div>
-        <h1
-          className="font-mono text-xs tracking-widest uppercase"
-          style={{ color: 'var(--text-muted)' }}
-        >
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+          margin: '0 0 6px 0',
+        }}>
           Manage
-        </h1>
-        <p
-          className="text-sm mt-1"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          Manage rooms, tags, and categories used across your inventory.
+        </p>
+        <p style={{
+          fontSize: '14px',
+          color: 'var(--text-secondary)',
+          margin: 0,
+        }}>
+          Add or remove rooms, categories and tags used across your inventory.
+        </p>
+        <p style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: '11px',
+          color: 'var(--text-muted)',
+          marginTop: '10px',
+        }}>
+          Press{' '}
+          <kbd style={{
+            border: '1px solid var(--border)',
+            borderRadius: '3px',
+            padding: '1px 6px',
+            fontSize: '10px',
+          }}>
+            Enter
+          </kbd>
+          {' '}to add
         </p>
       </div>
 
-      {/* Keyboard hint */}
-      <p
-        className="font-mono text-xs"
-        style={{ color: 'var(--text-muted)' }}
-      >
-        Press{' '}
-        <span className="border border-[var(--border)] px-1 rounded">Enter</span>
-        {' '}to add
-      </p>
-
-      {/* Three sections — stack on mobile, grid on desktop */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Three sections */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '20px',
+        alignItems: 'start',
+      }}>
         <ManageSection
           title="Rooms"
           items={rooms}

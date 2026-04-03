@@ -1,42 +1,94 @@
 import { useState } from 'react'
-import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
+import { Badge } from '../ui/Badge'
 
 function FillBar({ level }) {
-  if (level == null) return <span style={{ color: 'var(--text-muted)' }}>—</span>
+  if (level == null) return (
+    <span style={{ color: 'var(--text-muted)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>
+      —
+    </span>
+  )
   return (
-    <div className="flex items-center gap-2 min-w-20">
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '80px' }}>
       <div
-        className="flex-1 h-1 rounded-full overflow-hidden"
-        style={{ background: 'var(--bg-tertiary)' }}
+        style={{
+          flex: 1,
+          height: '4px',
+          borderRadius: '2px',
+          background: 'var(--bg-tertiary)',
+          overflow: 'hidden',
+        }}
       >
         <div
-          className="h-full rounded-full"
-          style={{ width: `${level * 100}%`, background: 'var(--text-primary)' }}
+          style={{
+            height: '100%',
+            borderRadius: '2px',
+            width: `${level * 100}%`,
+            background: 'var(--text-primary)',
+          }}
         />
       </div>
-      <span className="font-mono text-xs" style={{ color: 'var(--text-muted)' }}>
+      <span style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: 'var(--text-muted)',
+        flexShrink: 0,
+      }}>
         {Math.round(level * 100)}%
       </span>
     </div>
   )
 }
 
-// Column header with sort support
-function Th({ children, sortKey, currentSort, onSort }) {
+function SortableTh({ children, sortKey, currentSort, onSort, style = {} }) {
   const active = currentSort?.key === sortKey
   return (
     <th
-      className="text-left py-2 px-3 font-mono text-xs tracking-wider uppercase cursor-pointer select-none"
-      style={{ color: active ? 'var(--text-primary)' : 'var(--text-muted)' }}
-      onClick={() => onSort && onSort(sortKey)}
+      onClick={() => onSort(sortKey)}
+      style={{
+        textAlign: 'left',
+        padding: '12px 16px',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: active ? 'var(--text-primary)' : 'var(--text-muted)',
+        cursor: 'pointer',
+        userSelect: 'none',
+        whiteSpace: 'nowrap',
+        borderBottom: '1px solid var(--border)',
+        ...style,
+      }}
     >
-      <span className="flex items-center gap-1">
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
         {children}
         {active && (
-          <span>{currentSort.dir === 'asc' ? '↑' : '↓'}</span>
+          <span style={{ fontSize: '10px' }}>
+            {currentSort.dir === 'asc' ? '↑' : '↓'}
+          </span>
         )}
       </span>
+    </th>
+  )
+}
+
+function StaticTh({ children, style = {} }) {
+  return (
+    <th
+      style={{
+        textAlign: 'left',
+        padding: '12px 16px',
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        letterSpacing: '0.08em',
+        textTransform: 'uppercase',
+        color: 'var(--text-muted)',
+        whiteSpace: 'nowrap',
+        borderBottom: '1px solid var(--border)',
+        ...style,
+      }}
+    >
+      {children}
     </th>
   )
 }
@@ -55,11 +107,10 @@ export function ItemTable({
   const handleSort = (key) => {
     setSort(prev => ({
       key,
-      dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc'
+      dir: prev.key === key && prev.dir === 'asc' ? 'desc' : 'asc',
     }))
   }
 
-  // Client-side sort — server-side sort can be added later
   const sorted = [...items].sort((a, b) => {
     let aVal, bVal
     switch (sort.key) {
@@ -82,53 +133,94 @@ export function ItemTable({
     return sort.dir === 'asc' ? cmp : -cmp
   })
 
-  const allSelected = items.length > 0 &&
-    items.every(i => selectedIds.includes(i.id))
+  const allSelected = items.length > 0 && items.every(i => selectedIds.includes(i.id))
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-sm">
-        <thead>
-          <tr style={{ borderBottom: '1px solid var(--border)' }}>
-            {/* Select all */}
-            <th className="py-3 px-4 w-10 text-center">
-              <input
-                type="checkbox"
-                checked={allSelected}
-                onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))}
-                className="cursor-pointer"
-                style={{ accentColor: 'var(--accent)', width: '15px', height: '15px' }}
-              />
+    <div style={{ overflowX: 'auto', width: '100%' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead style={{ background: 'var(--bg-secondary)' }}>
+          <tr>
+            {/* Checkbox column */}
+            <th
+              style={{
+                width: '48px',
+                padding: '0 16px',
+                borderBottom: '1px solid var(--border)',
+                height: '48px',
+              }}
+            >
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+              }}>
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  onChange={() => onSelectAll(allSelected ? [] : items.map(i => i.id))}
+                  style={{
+                    width: '16px',
+                    height: '16px',
+                    cursor: 'pointer',
+                    accentColor: 'var(--accent)',
+                    display: 'block',
+                    margin: 0,
+                  }}
+                />
+              </div>
             </th>
-            <Th sortKey="name" currentSort={sort} onSort={handleSort}>
+
+            <SortableTh sortKey="name" currentSort={sort} onSort={handleSort}>
               Name
-            </Th>
-            <Th sortKey="room" currentSort={sort} onSort={handleSort}>
+            </SortableTh>
+
+            <SortableTh sortKey="room" currentSort={sort} onSort={handleSort}>
               Location
-            </Th>
-            <th
-              className="text-left py-2 px-3 font-mono text-xs tracking-wider uppercase"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              Tags / Categories
-            </th>
-            <Th sortKey="fill" currentSort={sort} onSort={handleSort}>
+            </SortableTh>
+
+            <StaticTh>Tags / Categories</StaticTh>
+
+            <SortableTh sortKey="fill" currentSort={sort} onSort={handleSort}>
               Fill
-            </Th>
-            {/* Image placeholder column */}
+            </SortableTh>
+
+            <StaticTh>Img</StaticTh>
+
+            {/* Spacer — pushes actions to the right */}
             <th
-              className="text-left py-2 px-3 font-mono text-xs tracking-wider uppercase"
-              style={{ color: 'var(--text-muted)' }}
-            >
-              Img
-            </th>
-            <th className="py-2 px-3" />
+              style={{
+                width: '100%',
+                borderBottom: '1px solid var(--border)',
+              }}
+            />
+
+            <StaticTh style={{ textAlign: 'right' }}>Actions</StaticTh>
           </tr>
         </thead>
+
         <tbody>
-          {sorted.map(item => {
+          {sorted.length === 0 && (
+            <tr>
+              <td
+                colSpan={8}
+                style={{
+                  padding: '64px 24px',
+                  textAlign: 'center',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '13px',
+                  color: 'var(--text-muted)',
+                }}
+              >
+                No items found
+              </td>
+            </tr>
+          )}
+
+          {sorted.map((item) => {
             const primaryName = item.names.find(n => n.is_primary)?.name
-              || item.names[0]?.name || 'Unnamed'
+              || item.names[0]?.name
+              || 'Unnamed'
             const aliases = item.names.filter(n => !n.is_primary)
             const isSelected = selectedIds.includes(item.id)
 
@@ -137,58 +229,84 @@ export function ItemTable({
                 key={item.id}
                 style={{
                   borderBottom: '1px solid var(--border)',
-                  background: isSelected
-                    ? 'var(--bg-tertiary)'
-                    : 'transparent',
+                  background: isSelected ? 'var(--bg-tertiary)' : 'transparent',
+                  transition: 'background 100ms ease',
                 }}
-                className="transition-colors hover:bg-[var(--bg-secondary)]"
+                onMouseEnter={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'var(--bg-secondary)'
+                }}
+                onMouseLeave={e => {
+                  if (!isSelected) e.currentTarget.style.background = 'transparent'
+                }}
               >
                 {/* Checkbox */}
-                <td className="py-3 px-4 text-center">
-                  <input
-                    type="checkbox"
-                    checked={isSelected}
-                    onChange={() => onSelect(item.id)}
-                    className="cursor-pointer"
-                    style={{ accentColor: 'var(--accent)', width: '15px', height: '15px' }}
-                  />
+                <td style={{ padding: '0 16px', verticalAlign: 'middle' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      onChange={() => onSelect(item.id)}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        cursor: 'pointer',
+                        accentColor: 'var(--accent)',
+                        display: 'block',
+                        margin: 0,
+                      }}
+                    />
+                  </div>
                 </td>
 
                 {/* Name */}
-                <td className="py-3 px-4">
-                  <p style={{ color: 'var(--text-primary)' }}>
+                <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'var(--text-primary)',
+                    margin: 0,
+                  }}>
                     {primaryName}
                   </p>
                   {aliases.length > 0 && (
-                    <p
-                      className="text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'var(--text-muted)',
+                      margin: '2px 0 0 0',
+                    }}>
                       {aliases.map(n => n.name).join(', ')}
                     </p>
                   )}
                 </td>
 
                 {/* Location */}
-                <td className="py-3 px-4">
-                  <p style={{ color: 'var(--text-secondary)' }}>
+                <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                  <p style={{
+                    fontSize: '14px',
+                    color: 'var(--text-secondary)',
+                    margin: 0,
+                    whiteSpace: 'nowrap',
+                  }}>
                     {item.room?.name || '—'}
                   </p>
                   {(item.shelf || item.level_or_drawer) && (
-                    <p
-                      className="text-xs"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      {[item.shelf, item.level_or_drawer]
-                        .filter(Boolean)
-                        .join(' · ')}
+                    <p style={{
+                      fontSize: '12px',
+                      color: 'var(--text-muted)',
+                      margin: '2px 0 0 0',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {[item.shelf, item.level_or_drawer].filter(Boolean).join(' · ')}
                     </p>
                   )}
                 </td>
 
                 {/* Tags / Categories */}
-                <td className="py-3 px-4">
-                  <div className="flex flex-wrap gap-1">
+                <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {item.categories.map(c => (
                       <Badge key={c.id} variant="active">{c.name}</Badge>
                     ))}
@@ -199,36 +317,60 @@ export function ItemTable({
                 </td>
 
                 {/* Fill level */}
-                <td className="py-3 px-4">
+                <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
                   <FillBar level={item.fill_level} />
                 </td>
 
                 {/* Image placeholder */}
-                <td className="py-3 px-4">
+                <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
                   <button
-                    className="font-mono text-lg leading-none transition-colors"
-                    style={{ color: 'var(--text-muted)' }}
-                    title="Add image (coming soon)"
                     disabled
+                    title="Add image (coming soon)"
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'not-allowed',
+                      fontFamily: 'var(--font-mono)',
+                      fontSize: '16px',
+                      color: 'var(--text-muted)',
+                      padding: 0,
+                      lineHeight: 1,
+                    }}
                   >
                     ⊕
                   </button>
                 </td>
 
-                {/* Row actions */}
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-1.5">
-                    <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
+                {/* Spacer — absorbs remaining space */}
+                <td style={{ width: '100%' }} />
+
+                {/* Actions — always on the right */}
+                <td
+                  style={{
+                    padding: '8px 16px',
+                    verticalAlign: 'middle',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onEdit(item)}
+                    >
                       Edit
                     </Button>
-                    <Button size="sm" variant="ghost" onClick={() => onClone(item.id)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onClone(item.id)}
+                    >
                       Clone
                     </Button>
                     <Button
                       size="sm"
                       variant="danger"
                       onClick={() => onDelete(item.id)}
-                      style={{ minWidth: '64px' }}
                     >
                       Delete
                     </Button>
@@ -237,18 +379,6 @@ export function ItemTable({
               </tr>
             )
           })}
-
-          {sorted.length === 0 && (
-            <tr>
-              <td
-                colSpan={7}
-                className="py-16 text-center font-mono text-sm"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                No items found
-              </td>
-            </tr>
-          )}
         </tbody>
       </table>
     </div>
