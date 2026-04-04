@@ -97,9 +97,6 @@ export function ItemsPage() {
       display: 'flex',
       flexDirection: 'column',
       gap: '24px',
-      // Extra horizontal breathing room inside the layout padding
-      paddingLeft: '8px',
-      paddingRight: '8px',
     }}>
 
       {/* ── Page header ───────────────────────────── */}
@@ -107,7 +104,7 @@ export function ItemsPage() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingBottom: '8px',
+        paddingBottom: '16px',
         borderBottom: '1px solid var(--border)',
       }}>
         <h1 style={{
@@ -135,7 +132,6 @@ export function ItemsPage() {
             onChange={val => setFilter('search', val)}
           />
         </div>
-
         <Button
           variant={activeFilterCount > 0 ? 'secondary' : 'ghost'}
           size="sm"
@@ -144,7 +140,6 @@ export function ItemsPage() {
         >
           Filter {activeFilterCount > 0 ? `(${activeFilterCount})` : ''}
         </Button>
-
         <Button
           size="sm"
           onClick={() => setShowForm(true)}
@@ -156,15 +151,13 @@ export function ItemsPage() {
 
       {/* ── Filter panel ──────────────────────────── */}
       {showFilter && (
-        <div style={{ marginTop: '-8px' }}>
-          <FilterPanel
-            rooms={rooms}
-            tags={localTags}
-            categories={categories}
-            onFilter={setFilter}
-            current={{ roomIds, categoryIds, tagIds }}
-          />
-        </div>
+        <FilterPanel
+          rooms={rooms}
+          tags={localTags}
+          categories={categories}
+          onFilter={setFilter}
+          current={{ roomIds, categoryIds, tagIds }}
+        />
       )}
 
       {/* ── Active filter chips ───────────────────── */}
@@ -216,7 +209,14 @@ export function ItemsPage() {
       {/* ── Item list ─────────────────────────────── */}
       {!loading && (
         isMobile ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          // Mobile — cards with side padding
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            paddingLeft: '4px',
+            paddingRight: '4px',
+          }}>
             {items.length === 0 && (
               <div style={{ padding: '64px 0', textAlign: 'center' }}>
                 <p style={{
@@ -250,6 +250,7 @@ export function ItemsPage() {
             ))}
           </div>
         ) : (
+          // Desktop — table
           <div style={{
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-md)',
@@ -307,7 +308,7 @@ export function ItemsPage() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingTop: '8px',
+          paddingTop: '16px',
           borderTop: '1px solid var(--border)',
         }}>
           <p style={{

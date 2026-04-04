@@ -10,23 +10,19 @@ function FillBar({ level }) {
   )
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '80px' }}>
-      <div
-        style={{
-          flex: 1,
-          height: '4px',
+      <div style={{
+        flex: 1,
+        height: '4px',
+        borderRadius: '2px',
+        background: 'var(--bg-tertiary)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
           borderRadius: '2px',
-          background: 'var(--bg-tertiary)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: '100%',
-            borderRadius: '2px',
-            width: `${level * 100}%`,
-            background: 'var(--text-primary)',
-          }}
-        />
+          width: `${level * 100}%`,
+          background: 'var(--text-primary)',
+        }} />
       </div>
       <span style={{
         fontFamily: 'var(--font-mono)',
@@ -74,20 +70,18 @@ function SortableTh({ children, sortKey, currentSort, onSort, style = {} }) {
 
 function StaticTh({ children, style = {} }) {
   return (
-    <th
-      style={{
-        textAlign: 'left',
-        padding: '12px 16px',
-        fontFamily: 'var(--font-mono)',
-        fontSize: '11px',
-        letterSpacing: '0.08em',
-        textTransform: 'uppercase',
-        color: 'var(--text-muted)',
-        whiteSpace: 'nowrap',
-        borderBottom: '1px solid var(--border)',
-        ...style,
-      }}
-    >
+    <th style={{
+      textAlign: 'left',
+      padding: '12px 16px',
+      fontFamily: 'var(--font-mono)',
+      fontSize: '11px',
+      letterSpacing: '0.08em',
+      textTransform: 'uppercase',
+      color: 'var(--text-muted)',
+      whiteSpace: 'nowrap',
+      borderBottom: '1px solid var(--border)',
+      ...style,
+    }}>
       {children}
     </th>
   )
@@ -140,15 +134,13 @@ export function ItemTable({
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
         <thead style={{ background: 'var(--bg-secondary)' }}>
           <tr>
-            {/* Checkbox column */}
-            <th
-              style={{
-                width: '48px',
-                padding: '0 16px',
-                borderBottom: '1px solid var(--border)',
-                height: '48px',
-              }}
-            >
+            {/* Checkbox */}
+            <th style={{
+              width: '48px',
+              padding: '0 16px',
+              borderBottom: '1px solid var(--border)',
+              height: '48px',
+            }}>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -188,12 +180,7 @@ export function ItemTable({
             <StaticTh>Img</StaticTh>
 
             {/* Spacer — pushes actions to the right */}
-            <th
-              style={{
-                width: '100%',
-                borderBottom: '1px solid var(--border)',
-              }}
-            />
+            <th style={{ width: '100%', borderBottom: '1px solid var(--border)' }} />
 
             <StaticTh style={{ textAlign: 'right' }}>Actions</StaticTh>
           </tr>
@@ -223,6 +210,7 @@ export function ItemTable({
               || 'Unnamed'
             const aliases = item.names.filter(n => !n.is_primary)
             const isSelected = selectedIds.includes(item.id)
+            const totalBadges = item.categories.length + item.tags.length
 
             return (
               <tr
@@ -268,6 +256,7 @@ export function ItemTable({
                     fontSize: '14px',
                     color: 'var(--text-primary)',
                     margin: 0,
+                    whiteSpace: 'nowrap',
                   }}>
                     {primaryName}
                   </p>
@@ -276,6 +265,7 @@ export function ItemTable({
                       fontSize: '12px',
                       color: 'var(--text-muted)',
                       margin: '2px 0 0 0',
+                      whiteSpace: 'nowrap',
                     }}>
                       {aliases.map(n => n.name).join(', ')}
                     </p>
@@ -304,15 +294,31 @@ export function ItemTable({
                   )}
                 </td>
 
-                {/* Tags / Categories */}
+                {/* Tags / Categories — max 2+2, no wrapping */}
                 <td style={{ padding: '12px 16px', verticalAlign: 'middle' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
-                    {item.categories.map(c => (
+                  <div style={{
+                    display: 'flex',
+                    flexWrap: 'nowrap',
+                    gap: '4px',
+                    alignItems: 'center',
+                  }}>
+                    {item.categories.slice(0, 2).map(c => (
                       <Badge key={c.id} variant="active">{c.name}</Badge>
                     ))}
-                    {item.tags.map(t => (
+                    {item.tags.slice(0, 2).map(t => (
                       <Badge key={t.id}>{t.name}</Badge>
                     ))}
+                    {totalBadges > 4 && (
+                      <span style={{
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '11px',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}>
+                        +{totalBadges - 4}
+                      </span>
+                    )}
                   </div>
                 </td>
 
@@ -341,37 +347,23 @@ export function ItemTable({
                   </button>
                 </td>
 
-                {/* Spacer — absorbs remaining space */}
+                {/* Spacer */}
                 <td style={{ width: '100%' }} />
 
-                {/* Actions — always on the right */}
-                <td
-                  style={{
-                    padding: '8px 16px',
-                    verticalAlign: 'middle',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
+                {/* Actions */}
+                <td style={{
+                  padding: '8px 16px',
+                  verticalAlign: 'middle',
+                  whiteSpace: 'nowrap',
+                }}>
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onEdit(item)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => onEdit(item)}>
                       Edit
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => onClone(item.id)}
-                    >
+                    <Button size="sm" variant="ghost" onClick={() => onClone(item.id)}>
                       Clone
                     </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      onClick={() => onDelete(item.id)}
-                    >
+                    <Button size="sm" variant="danger" onClick={() => onDelete(item.id)}>
                       Delete
                     </Button>
                   </div>

@@ -2,29 +2,49 @@ import { useState } from 'react'
 import { Badge } from '../ui/Badge'
 import { Button } from '../ui/Button'
 
-// Fill level shown as a small visual bar
 function FillBar({ level }) {
   if (level == null) return null
   return (
-    <div className="flex items-center gap-2">
-      <div
-        className="flex-1 h-1 rounded-full overflow-hidden"
-        style={{ background: 'var(--bg-tertiary)' }}
-      >
-        <div
-          className="h-full rounded-full transition-all"
-          style={{
-            width: `${level * 100}%`,
-            background: 'var(--text-primary)'
-          }}
-        />
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{
+        flex: 1,
+        height: '4px',
+        borderRadius: '2px',
+        background: 'var(--bg-tertiary)',
+        overflow: 'hidden',
+      }}>
+        <div style={{
+          height: '100%',
+          borderRadius: '2px',
+          width: `${level * 100}%`,
+          background: 'var(--text-primary)',
+        }} />
       </div>
-      <span
-        className="font-mono text-xs"
-        style={{ color: 'var(--text-muted)' }}
-      >
+      <span style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        color: 'var(--text-muted)',
+        flexShrink: 0,
+      }}>
         {Math.round(level * 100)}%
       </span>
+    </div>
+  )
+}
+
+function DetailRow({ label, children }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <p style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        letterSpacing: '0.05em',
+        color: 'var(--text-muted)',
+        margin: 0,
+      }}>
+        {label}
+      </p>
+      {children}
     </div>
   )
 }
@@ -35,201 +55,240 @@ export function ItemCard({
   onSelect,
   onEdit,
   onDelete,
-  onClone
+  onClone,
 }) {
   const [expanded, setExpanded] = useState(false)
+
   const primaryName = item.names.find(n => n.is_primary)?.name
     || item.names[0]?.name
     || 'Unnamed'
   const aliases = item.names.filter(n => !n.is_primary)
 
   return (
-    <div
-      className="card transition-all duration-150"
-      style={{
-        borderColor: selected ? 'var(--border-strong)' : 'var(--border)',
-        background: selected ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
-      }}
-    >
-      {/* Card header — always visible */}
-      <div className="flex items-center gap-3 p-3">
-        {/* Checkbox */}
-        <input
-          type="checkbox"
-          checked={selected}
-          onChange={() => onSelect(item.id)}
-          onClick={e => e.stopPropagation()}
-          className="flex-shrink-0 cursor-pointer"
-        />
+    <div style={{
+      border: '1px solid',
+      borderColor: selected ? 'var(--border-strong)' : 'var(--border)',
+      borderRadius: 'var(--radius-md)',
+      background: selected ? 'var(--bg-tertiary)' : 'var(--bg-secondary)',
+      overflow: 'hidden',
+      transition: 'border-color 150ms ease, background 150ms ease',
+      // Left and right margin so card doesn't touch screen edges
+      marginLeft: '2px',
+      marginRight: '2px',
+    }}>
 
-        {/* Name + location summary */}
+      {/* ── Card header — always visible ─────────── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '14px 16px',   // equal padding on both sides
+      }}>
+
+        {/* Checkbox — padding keeps it off the left edge */}
+        <div style={{ flexShrink: 0, paddingLeft: '2px' }}>
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={() => onSelect(item.id)}
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '16px',
+              height: '16px',
+              cursor: 'pointer',
+              accentColor: 'var(--accent)',
+              display: 'block',
+              margin: 0,
+            }}
+          />
+        </div>
+
+        {/* Name + location — takes remaining space */}
         <div
-          className="flex-1 min-w-0 cursor-pointer"
+          style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
           onClick={() => setExpanded(e => !e)}
         >
-          <p
-            className="text-sm font-medium truncate"
-            style={{ color: 'var(--text-primary)' }}
-          >
+          <p style={{
+            fontSize: '14px',
+            fontWeight: 500,
+            color: 'var(--text-primary)',
+            margin: 0,
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}>
             {primaryName}
           </p>
           {item.room && (
-            <p
-              className="text-xs truncate"
-              style={{ color: 'var(--text-muted)' }}
-            >
+            <p style={{
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+              margin: '2px 0 0 0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}>
               {item.room.name}
               {item.shelf ? ` · ${item.shelf}` : ''}
             </p>
           )}
         </div>
 
-        {/* Category badges — collapsed view */}
+        {/* Category badges — only on wider mobile screens */}
         {!expanded && item.categories.length > 0 && (
-          <div className="hidden sm:flex gap-1 flex-shrink-0">
-            {item.categories.slice(0, 2).map(c => (
-              <Badge key={c.id}>{c.name}</Badge>
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            flexShrink: 0,
+            maxWidth: '120px',
+            overflow: 'hidden',
+          }}>
+            {item.categories.slice(0, 1).map(c => (
+              <Badge key={c.id} variant="active">{c.name}</Badge>
             ))}
           </div>
         )}
 
-        {/* Expand toggle */}
+        {/* Expand toggle — padding keeps it off the right edge */}
         <button
           onClick={() => setExpanded(e => !e)}
-          className="flex-shrink-0 font-mono text-base transition-transform duration-200"
           style={{
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-mono)',
+            fontSize: '16px',
             color: 'var(--text-muted)',
-            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)'
+            padding: '4px 6px',     // right padding so it doesn't hug the wall
+            marginRight: '-2px',    // optical alignment
+            lineHeight: 1,
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 200ms ease, color 150ms ease',
+            transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
           }}
+          onMouseEnter={e => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}
           aria-label={expanded ? 'Collapse' : 'Expand'}
         >
           ∨
         </button>
       </div>
 
-      {/* Expanded content */}
+      {/* ── Expanded content ──────────────────────── */}
       {expanded && (
-        <div
-          className="border-t px-3 pb-3 pt-3 flex flex-col gap-3"
-          style={{ borderColor: 'var(--border)' }}
-        >
+        <div style={{
+          borderTop: '1px solid var(--border)',
+          padding: '16px 16px 0 16px',   // no bottom padding — actions have their own
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '16px',
+        }}>
+
           {/* Aliases */}
           {aliases.length > 0 && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Also known as
-              </p>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <DetailRow label="Also known as">
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
                 {aliases.map(n => n.name).join(', ')}
               </p>
-            </div>
+            </DetailRow>
           )}
 
-          {/* Location details */}
+          {/* Location */}
           {(item.room || item.shelf || item.level_or_drawer) && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Location
-              </p>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <DetailRow label="Location">
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
                 {[item.room?.name, item.shelf, item.level_or_drawer]
                   .filter(Boolean)
                   .join(' → ')}
               </p>
-            </div>
+            </DetailRow>
           )}
 
           {/* Fill level */}
           {item.fill_level != null && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Fill level
-              </p>
+            <DetailRow label="Fill level">
               <FillBar level={item.fill_level} />
-            </div>
+            </DetailRow>
           )}
 
           {/* Tags */}
           {item.tags.length > 0 && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Tags
-              </p>
-              <div className="flex flex-wrap gap-1">
+            <DetailRow label="Tags">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {item.tags.map(t => <Badge key={t.id}>{t.name}</Badge>)}
               </div>
-            </div>
+            </DetailRow>
           )}
 
           {/* Categories */}
           {item.categories.length > 0 && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Categories
-              </p>
-              <div className="flex flex-wrap gap-1">
+            <DetailRow label="Categories">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                 {item.categories.map(c => (
                   <Badge key={c.id} variant="active">{c.name}</Badge>
                 ))}
               </div>
-            </div>
+            </DetailRow>
           )}
 
           {/* Comments */}
           {item.comments && (
-            <div>
-              <p
-                className="font-mono text-xs mb-1"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Comments
-              </p>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <DetailRow label="Comments">
+              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
                 {item.comments}
               </p>
-            </div>
+            </DetailRow>
           )}
 
           {/* Image placeholder */}
-          <div
-            className="border border-dashed rounded-[var(--radius-sm)] p-3 flex items-center justify-center"
-            style={{ borderColor: 'var(--border)' }}
-          >
-            <span
-              className="text-xs font-mono"
-              style={{ color: 'var(--text-muted)' }}
-            >
+          <div style={{
+            border: '1px dashed var(--border)',
+            borderRadius: 'var(--radius-sm)',
+            padding: '12px',
+            textAlign: 'center',
+          }}>
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: '12px',
+              color: 'var(--text-muted)',
+            }}>
               ⊕ image (coming soon)
             </span>
           </div>
 
-          {/* Actions */}
-          <div className="flex gap-2 pt-1">
-            <Button size="sm" variant="secondary" onClick={() => onEdit(item)}>
+          {/* Actions — bottom padding here gives space below buttons */}
+          <div style={{
+            display: 'flex',
+            gap: '8px',
+            paddingBottom: '16px',   // space below the action buttons
+            paddingTop: '4px',
+            borderTop: '1px solid var(--border)',
+            marginTop: '4px',
+          }}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => onEdit(item)}
+              style={{ flex: 1 }}
+            >
               Edit
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => onClone(item.id)}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onClone(item.id)}
+              style={{ flex: 1 }}
+            >
               Clone
             </Button>
             <Button
               size="sm"
               variant="danger"
               onClick={() => onDelete(item.id)}
+              style={{ flex: 1 }}
             >
               Delete
             </Button>
