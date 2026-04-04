@@ -5,24 +5,41 @@ import { Button } from '../components/ui/Button'
 // Single stat card
 function StatCard({ label, value, sub }) {
   return (
-    <div className="card p-4 flex flex-col gap-1">
-      <p
-        className="font-mono text-xs tracking-widest uppercase"
-        style={{ color: 'var(--text-muted)' }}
-      >
+    <div style={{
+      border: '1px solid var(--border)',
+      borderRadius: 'var(--radius-md)',
+      background: 'var(--bg-secondary)',
+      padding: '20px 24px',          // generous left/right padding
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+    }}>
+      <p style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '11px',
+        letterSpacing: '0.1em',
+        textTransform: 'uppercase',
+        color: 'var(--text-muted)',
+        margin: 0,
+      }}>
         {label}
       </p>
-      <p
-        className="font-mono text-3xl font-medium"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <p style={{
+        fontFamily: 'var(--font-mono)',
+        fontSize: '32px',
+        fontWeight: 500,
+        color: 'var(--text-primary)',
+        margin: 0,
+        lineHeight: 1.1,
+      }}>
         {value ?? '—'}
       </p>
       {sub && (
-        <p
-          className="text-xs"
-          style={{ color: 'var(--text-muted)' }}
-        >
+        <p style={{
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+          margin: 0,
+        }}>
           {sub}
         </p>
       )}

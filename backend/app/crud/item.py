@@ -28,26 +28,26 @@ def get_items(
     skip: int = 0,
     limit: int = 50,
     search: str | None = None,
-    category_id: int | None = None,
-    tag_id: int | None = None,
-    room_id: int | None = None,
+    category_ids: list[int] | None = None,
+    tag_ids: list[int] | None = None,
+    room_ids: list[int] | None = None,
 ) -> tuple[list[Item], int]:
     query = _get_item_query(db)
 
     if search:
         query = query.filter(Item.names.any(ItemName.name.ilike(f"%{search}%")))
 
-    if category_id:
-        query = query.filter(Item.categories.any(Category.id == category_id))
-    if tag_id:
-        query = query.filter(Item.tags.any(Tag.id == tag_id))
+    if category_ids:
+        query = query.filter(Item.categories.any(Category.id.in_(category_ids)))
 
-    if room_id:
-        query = query.filter(Item.room_id == room_id)
+    if tag_ids:
+        query = query.filter(Item.tags.any(Tag.id.in_(tag_ids)))
+
+    if room_ids:
+        query = query.filter(Item.room_id.in_(room_ids))
 
     total = query.count()
     items = query.offset(skip).limit(limit).all()
-
     return items, total
 
 

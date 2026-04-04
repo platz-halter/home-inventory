@@ -1,7 +1,6 @@
 import { useEffect } from 'react'
 
-export function Modal({ isOpen, onClose, title, children, footer }) {
-  // Close on Escape key — keyboard shortcut support
+export function Modal({ isOpen, onClose, title, children }) {
   useEffect(() => {
     if (!isOpen) return
     const handler = (e) => { if (e.key === 'Escape') onClose() }
@@ -9,7 +8,6 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
     return () => window.removeEventListener('keydown', handler)
   }, [isOpen, onClose])
 
-  // Prevent body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -18,48 +16,96 @@ export function Modal({ isOpen, onClose, title, children, footer }) {
   if (!isOpen) return null
 
   return (
-    // Backdrop
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
       onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '16px',
+        backgroundColor: 'rgba(0,0,0,0.6)',
+      }}
     >
-      {/* Modal panel — stop click from closing when clicking inside */}
       <div
-        className="card w-full max-w-lg max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
-        aria-labelledby="modal-title"
+        style={{
+          width: '100%',
+          maxWidth: '540px',
+          maxHeight: '90vh',
+          display: 'flex',
+          flexDirection: 'column',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--bg-secondary)',
+          overflow: 'hidden',
+        }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[var(--border)]">
-          <h2
-            id="modal-title"
-            className="font-mono text-sm font-medium tracking-wider uppercase text-[var(--text-primary)]"
-          >
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <h2 style={{
+            fontFamily: 'var(--font-mono)',
+            fontSize: '11px',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            color: 'var(--text-primary)',
+            margin: 0,
+          }}>
             {title}
           </h2>
+
+          {/* Close button — right padding so it doesn't hug the edge */}
           <button
             onClick={onClose}
-            className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors text-lg leading-none"
-            aria-label="Close modal"
+            aria-label="Close"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'var(--font-mono)',
+              fontSize: '20px',
+              lineHeight: 1,
+              color: 'var(--text-muted)',
+              padding: '4px 8px',       // right padding so it doesn't touch the wall
+              marginRight: '-8px',      // optical alignment with container edge
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'color 150ms ease, background 150ms ease',
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = 'var(--text-primary)'
+              e.currentTarget.style.background = 'var(--bg-tertiary)'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = 'var(--text-muted)'
+              e.currentTarget.style.background = 'none'
+            }}
           >
             ×
           </button>
         </div>
 
-        {/* Body — scrollable */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Scrollable body */}
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '24px 20px',
+        }}>
           {children}
         </div>
-
-        {/* Footer */}
-        {footer && (
-          <div className="p-4 border-t border-[var(--border)] flex justify-end gap-2">
-            {footer}
-          </div>
-        )}
       </div>
     </div>
   )

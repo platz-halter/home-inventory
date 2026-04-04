@@ -8,48 +8,55 @@ from app import crud
 router = APIRouter(prefix="/api/items", tags=["items"])
 
 
-# ── Bulk operations MUST come before /{item_id} routes ──────────
 @router.delete("/bulk/delete", response_model=dict)
 def bulk_delete(item_ids: list[int], db: Session = Depends(get_db)):
     count = crud.item.bulk_delete_items(db, item_ids)
     return {"deleted": count}
 
 
-# ── Collection routes ────────────────────────────────────────────
 @router.get("/", response_model=ItemList)
 def list_items(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=50, ge=1, le=200),
     search: Optional[str] = Query(default=None),
-    category_id: Optional[int] = Query(default=None),
-    tag_id: Optional[int] = Query(default=None),
-    room_id: Optional[int] = Query(default=None),
+    # Accept comma-separated IDs: ?category_ids=1,2,3
+    category_ids: Optional[str] = Query(default=None),
+    tag_ids: Optional[str] = Query(default=None),
+    room_ids: Optional[str] = Query(default=None),
     db: Session = Depends(get_db),
 ):
+    # Parse comma-separated strings into lists of ints
+    def parse_ids(val):
+        if not val:
+            return None
+        try:
+            return [int(x) for x in val.split(",") if x.strip()]
+        except ValueError:
+            return None
+
     items, total = crud.item.get_items(
         db,
         skip=skip,
         limit=limit,
         search=search,
-        category_id=category_id,
-        tag_id=tag_id,
-        room_id=room_id,
+        category_ids=parse_ids(category_ids),
+        tag_ids=parse_ids(tag_ids),
+        room_ids=parse_ids(room_ids),
     )
     return ItemList(items=items, total=total, skip=skip, limit=limit)
 
 
-@router.post("/", response_model=Item, status_code=201)
-def create_item(item: ItemCreate, db: Session = Depends(get_db)):
-    return crud.item.create_item(db, item)
-
-
-# ── Single item routes — dynamic {item_id} always last ──────────
 @router.get("/{item_id}", response_model=Item)
 def get_item(item_id: int, db: Session = Depends(get_db)):
     db_item = crud.item.get_item(db, item_id)
     if not db_item:
         raise HTTPException(status_code=404, detail="Item not found")
     return db_item
+
+
+@router.post("/", response_model=Item, status_code=201)
+def create_item(item: ItemCreate, db: Session = Depends(get_db)):
+    return crud.item.create_item(db, item)
 
 
 @router.patch("/{item_id}", response_model=Item)
