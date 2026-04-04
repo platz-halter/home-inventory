@@ -11,10 +11,9 @@ RUN npm run build             # produces a static /app/dist folder
 # The builder stage is discarded, keeping the final image small
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-EXPOSE 3000
 
-# Custom nginx config to serve on port 3000 and handle React routing
-RUN echo 'server { listen 3000; location / { root /usr/share/nginx/html; try_files $uri /index.html; } }' \
-  > /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80
+
+CMD [ "nginx", "-g", "daemon off;" ]
