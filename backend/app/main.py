@@ -1,15 +1,35 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from alembic.config import Config
+from alembic import command
 from app.routers import items, rooms, tags, categories, stats
 
-app = FastAPI(title="Home Inventory API", version="0.1.0")
 
-# CORS — browsers block requests from one address (localhost:3000)
-# to another (localhost:8000) unless the backend explicitly allows it
+def run_migrations():
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Runs on startup — before the app accepts requests
+    run_migrations()
+    yield
+    # Runs on shutdown — after the app stops accepting requests
+    # Nothing to clean up for now, but the structure is here
+
+
+app = FastAPI(
+    title="Home Inventory API",
+    version="0.1.0",
+    lifespan=lifespan,
+)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # frontend dev server
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
