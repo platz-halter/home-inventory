@@ -77,9 +77,13 @@ export function useItems() {
       if (key === 'categoryIds') setIds(next, 'category_ids', value)
       else if (key === 'tagIds') setIds(next, 'tag_ids', value)
       else if (key === 'roomIds') setIds(next, 'room_ids', value)
-      else if (value) next.set(key, value)
-      else next.delete(key)
-      next.delete('skip')
+      else if (value !== null && value !== undefined && value !== '') {
+        next.set(key, value)
+      } else {
+        next.delete(key)
+      }
+      // Only reset pagination when changing filters, not when changing page
+      if (key !== 'skip') next.delete('skip')
       return next
     })
   }
